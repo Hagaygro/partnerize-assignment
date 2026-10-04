@@ -1,0 +1,10 @@
+# Raw data: ~9.5GB archive provided for this assignment only. Never commit it.
+data/
+*.parquet
+*.zip
+
+# Environment
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
