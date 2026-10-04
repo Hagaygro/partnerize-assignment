@@ -33,19 +33,34 @@ FROM (VALUES
     ('Walmart',    'walmart.com',         FALSE,  'walmart')
 ) AS t(brand, domain, is_client, search_term_re);
 
--- All events of users who touched a brand domain (any subdomain), duplicates of type 1 removed.
+-- Affiliate-network redirect hosts: the hop a click passes through on its way to the advertiser.
+-- The panel rarely records these, but when it does, the hop is the click itself, even if no
+-- landing follows (cookie stuffing). Network admin UIs (app.impact.com, members.cj.com …) and
+-- tracking tags (emjcd.com, tags.rd.linksynergy.com) are deliberately excluded.
+CREATE OR REPLACE MACRO affiliate_hop_host_re() AS
+    '(^|\.)(prf\.hn|sjv\.io|pxf\.io|7eer\.net|evyy\.net|ojrq\.net|xuok\.net|vxf\.io|mlfo\.net|anrdoezrs\.net|jdoqocy\.com|tkqlhce\.com|dpbolvw\.net|kqzyfj\.com|qksrv\.net|awin1\.com|pntra\.com|pntrs\.com|pntrac\.com|gopjn\.com|pjtra\.com|pjatr\.com)$|^(click\.linksynergy\.com|shareasale\.com|avantlink\.com|track\.flexlinkspro\.com|goto\.walmart\.com)$';
+
+-- All events of users who touched a brand: a brand domain (any subdomain), or an affiliate hop
+-- pointing at one (vanity host such as saatva.prf.hn, or the brand in the encoded destination).
+-- Duplicates of type 1 removed.
 CREATE OR REPLACE TABLE brand_user_events_raw AS
 WITH tagged AS (
     SELECT r.event_id, r.user_id, r.session_id, r.created_time, r.host, r.url,
            nullif(regexp_extract(r.host,
                   '(?:^|\.)((?:saatva|nectarsleep|helixsleep|dreamcloudsleep|walmart)\.com)$', 1), '')
-                  AS brand_domain
+                  AS brand_domain,
+           CASE WHEN regexp_matches(r.host, affiliate_hop_host_re())
+                -- the brand's full .com domain must appear in the hop's host or destination:
+                -- "walmart" alone also matches walmart.ca and gift-card pages
+                THEN nullif(regexp_extract(lower(r.host || ' ' || coalesce(try(url_decode(r.url)), r.url)),
+                            '\b(saatva|nectarsleep|helixsleep|dreamcloudsleep|walmart)\.com\b', 1), '') || '.com'
+           END    AS hop_brand_domain
     FROM raw_clicks r
 ),
 brand_users AS (
     SELECT DISTINCT user_id
     FROM tagged
-    WHERE brand_domain IS NOT NULL
+    WHERE brand_domain IS NOT NULL OR hop_brand_domain IS NOT NULL
 )
 SELECT t.*
 FROM tagged t
@@ -77,10 +92,12 @@ SELECT e.event_id,
        b.brand,
        -- Main site only (bare domain or www). This excludes iframes and tags
        -- such as sgtm.saatva.com and d.emails.saatva.com.
-       coalesce(e.host IN (b.domain, 'www.' || b.domain), FALSE) AS is_brand_page
+       coalesce(e.host IN (b.domain, 'www.' || b.domain), FALSE) AS is_brand_page,
+       h.brand                                                   AS hop_brand      -- affiliate hop towards this brand
 FROM brand_user_events_raw e
 LEFT JOIN user_alias a ON a.user_id = e.user_id
 LEFT JOIN brands b     ON b.domain = e.brand_domain
+LEFT JOIN brands h     ON h.domain = e.hop_brand_domain
 -- Mirror copies of one event collapse into one row per person.
 QUALIFY row_number() OVER (PARTITION BY coalesce(a.person_id, e.user_id), e.created_time, e.url
                            ORDER BY e.event_id) = 1;

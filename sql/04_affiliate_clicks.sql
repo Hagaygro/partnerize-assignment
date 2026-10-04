@@ -17,14 +17,23 @@
 --
 -- One click is recorded on several rows (page reloads, parallel sessions, the
 -- URL surviving navigation), so clicks are deduplicated on the network click id.
+--
+-- Second path: the network redirect hop itself (saatva.prf.hn/click/…,
+-- goto.walmart.com/c/…). The panel rarely records hops. A hop followed within
+-- 60s by a tagged landing is the same click and is not counted again. Any other
+-- hop is a click of its own. A hop with no landing at all registered a click
+-- (and cookie) without the user ever seeing the brand's site: the signature of
+-- cookie stuffing.
 -- =============================================================================
 
 CREATE OR REPLACE MACRO affiliate_marker_re() AS
     '(?i)[?&](irclickid=|cidimp=|irgwc=1|clickref=|app_clickref=|click_id=\d{4}l|cjevent=|cjdata=|ranmid=|ransiteid=|raneaid=|awc=|sscid=|avad=|veh=aff|wmlspartner=imp_|utm_medium=(affiliate|affiliates|aff)(&|#|$))';
 
 -- Value of a query-string parameter (case-insensitive key), URL-decoded; NULL if absent/empty.
+-- try(): some URLs carry non-UTF8 escapes (e.g. GBK search terms), which url_decode rejects.
 CREATE OR REPLACE MACRO url_param(u, key) AS
-    nullif(url_decode(regexp_extract(u, '(?i)[?&]' || key || '=([^&#]*)', 1)), '');
+    nullif(coalesce(try(url_decode(regexp_extract(u, '(?i)[?&]' || key || '=([^&#]*)', 1))),
+                    regexp_extract(u, '(?i)[?&]' || key || '=([^&#]*)', 1)), '');
 
 -- Every landing row that carries affiliate parameters --------------------------
 CREATE OR REPLACE TABLE affiliate_landings AS
@@ -61,8 +70,8 @@ FROM brand_user_events e
 WHERE e.is_brand_page
   AND regexp_matches(e.url, affiliate_marker_re());
 
--- One row per click ------------------------------------------------------------
-CREATE OR REPLACE TABLE affiliate_clicks AS
+-- One row per tagged-landing click -------------------------------------------------
+CREATE OR REPLACE TABLE landing_clicks AS
 SELECT brand,
        -- Without a click id (rare), fall back to user + exact landing URL.
        coalesce(network_click_id, user_id || '|' || url)  AS click_key,
@@ -79,3 +88,71 @@ SELECT brand,
        count(DISTINCT session_id)                          AS sessions_recorded
 FROM affiliate_landings
 GROUP BY brand, click_key;
+
+-- Redirect hops towards a brand ----------------------------------------------------
+CREATE OR REPLACE TABLE affiliate_hops AS
+SELECT e.hop_brand AS brand,
+       e.user_id,
+       e.session_id,
+       e.created_time,
+       e.host,
+       e.url,
+       CASE
+           WHEN regexp_matches(e.host, '(^|\.)prf\.hn$')                                           THEN 'Partnerize'
+           WHEN regexp_matches(e.host, '(^|\.)(pntra|pntrs|pntrac|gopjn|pjtra|pjatr)\.com$')        THEN 'Pepperjam (Partnerize)'
+           WHEN regexp_matches(e.host, '(^|\.)(sjv\.io|pxf\.io|7eer\.net|evyy\.net|ojrq\.net|xuok\.net|vxf\.io|mlfo\.net)$')
+                OR e.host = 'goto.walmart.com'                                                      THEN 'Impact'
+           WHEN regexp_matches(e.host, '(^|\.)(anrdoezrs\.net|jdoqocy\.com|tkqlhce\.com|dpbolvw\.net|kqzyfj\.com|qksrv\.net)$') THEN 'CJ'
+           WHEN e.host = 'click.linksynergy.com'                                                   THEN 'Rakuten'
+           WHEN e.host IN ('awin1.com', 'shareasale.com')                                          THEN 'Awin'
+           WHEN e.host = 'avantlink.com'                                                           THEN 'AvantLink'
+           WHEN e.host = 'track.flexlinkspro.com'                                                  THEN 'FlexOffers'
+           ELSE 'Other'
+       END                                                                         AS network,
+       -- Publisher id as encoded in each network's link format
+       coalesce('camref:' || nullif(regexp_extract(e.url, 'camref:([0-9A-Za-z]+)', 1), ''),
+                'impact:' || nullif(regexp_extract(e.url, '/c/(\d+)/', 1), ''),
+                'cj:'     || nullif(regexp_extract(e.url, 'click-(\d+)-', 1), ''),
+                'awin:'   || nullif(regexp_extract(e.url, '(?i)awinaffid=(\d+)', 1), ''),
+                'unknown')                                                         AS publisher
+FROM brand_user_events e
+WHERE e.hop_brand IS NOT NULL;
+
+-- Hops that are not the same click as a tagged landing ------------------------------
+CREATE OR REPLACE TABLE hop_clicks AS
+WITH classified AS (
+    SELECT h.*,
+           EXISTS (SELECT 1 FROM landing_clicks c
+                   WHERE c.brand = h.brand AND c.user_id = h.user_id
+                     AND c.click_time BETWEEN h.created_time AND h.created_time + INTERVAL 60 SECOND) AS has_tagged_landing,
+           EXISTS (SELECT 1 FROM brand_user_events e
+                   WHERE e.user_id = h.user_id AND e.brand = h.brand AND e.is_brand_page
+                     AND e.created_time BETWEEN h.created_time AND h.created_time + INTERVAL 60 SECOND) AS has_any_landing,
+           -- several hops of one redirect chain (e.g. ojrq.net → brand.xuok.net) count once
+           date_diff('second', lag(h.created_time) OVER (PARTITION BY h.brand, h.user_id ORDER BY h.created_time),
+                     h.created_time)                                                                AS secs_since_prev_hop
+    FROM affiliate_hops h
+)
+SELECT brand,
+       'hop|' || user_id || '|' || created_time::VARCHAR                                AS click_key,
+       created_time                                                                     AS click_time,
+       user_id,
+       session_id,
+       NULL::VARCHAR                                                                    AS landing_url,
+       network,
+       publisher,
+       NULL::VARCHAR                                                                    AS publisher_sub_id,
+       NULL::VARCHAR                                                                    AS coupon,
+       FALSE                                                                            AS has_paid_search_click_id,
+       0                                                                                AS landing_rows,
+       1                                                                                AS sessions_recorded,
+       CASE WHEN has_any_landing THEN 'hop + untagged landing' ELSE 'hop, no landing' END AS click_source
+FROM classified
+WHERE NOT has_tagged_landing
+  AND (secs_since_prev_hop IS NULL OR secs_since_prev_hop > 10);
+
+-- All affiliate clicks ---------------------------------------------------------------
+CREATE OR REPLACE TABLE affiliate_clicks AS
+SELECT *, 'tagged landing' AS click_source FROM landing_clicks
+UNION ALL BY NAME
+SELECT * FROM hop_clicks;

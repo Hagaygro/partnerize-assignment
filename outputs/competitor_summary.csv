@@ -1,6 +1,6 @@
-brand,is_client,networks,panel_visits,panel_affiliate_clicks,panel_affiliate_users,panel_publishers,panel_converted_clicks,panel_conversions_all_sources,pct_visits_from_affiliate,pct_clicks_reaching_checkout,pct_clicks_converting,pct_orders_affiliate_attributed,pct_clicks_strong_hijack_signal,est_us_affiliate_clicks,est_us_affiliate_clicks_lo95,est_us_affiliate_clicks_hi95,est_us_converted_clicks,est_us_converted_clicks_hi95,est_us_affiliate_clicks_brand_calibrated,est_us_converted_clicks_benchmark_lo,est_us_converted_clicks_benchmark_hi
-Saatva,true,Partnerize,25,5,4,3,0,0,16.0,0.0,0.0,,20.0,5445.0,1755.0,12708.0,0.0,3995.0,13723.0,27.0,109.0
-Walmart,false,"Impact, UTM only",16401,6449,1020,110,112,855,6.4,5.6,1.74,13.1,25.7,7023454.0,6853068.0,7197006.0,121977.0,146771.0,7023454.0,,
-Nectar,false,Impact,51,4,2,2,0,0,3.9,0.0,0.0,,25.0,4356.0,1172.0,11153.0,0.0,3995.0,12459.0,22.0,87.0
-Helix,false,Impact,19,2,2,1,0,0,10.5,0.0,0.0,,0.0,2178.0,245.0,7864.0,0.0,3995.0,,11.0,44.0
-DreamCloud,false,Impact,27,2,2,2,0,0,7.4,0.0,0.0,,0.0,2178.0,245.0,7864.0,0.0,3995.0,4394.0,11.0,44.0
+brand,is_client,networks,panel_visits,panel_affiliate_clicks,panel_clicks_no_landing,panel_affiliate_users,panel_publishers,panel_converted_clicks,panel_converted_clicks_broad,panel_conversions_all_sources,pct_visits_from_affiliate,pct_clicks_reaching_cart_or_checkout,pct_clicks_converting,pct_orders_affiliate_attributed,pct_clicks_strong_hijack_signal,scale_factor,est_us_affiliate_clicks,est_us_affiliate_clicks_lo95,est_us_affiliate_clicks_hi95,est_us_affiliate_clicks_alt,est_us_converted_clicks,est_us_converted_clicks_hi95,est_us_converted_clicks_benchmark_lo,est_us_converted_clicks_benchmark_hi
+Saatva,true,Partnerize,25,6,1,5,4,0,0,0,16.0,0.0,0.0,,33.3,2784.0,16706.0,6100.0,36364.0,6534.0,0.0,10213.0,84.0,334.0
+Walmart,false,"Impact, UTM only",16401,6449,0,1016,110,112,117,855,6.4,5.6,1.74,13.1,23.4,1089.0,7023454.0,6853068.0,7197006.0,3009836.0,121977.0,146771.0,,
+Nectar,false,Impact,51,4,0,2,2,0,0,0,3.9,0.0,0.0,,25.0,2784.0,11138.0,2996.0,28515.0,4356.0,0.0,10213.0,56.0,223.0
+DreamCloud,false,Impact,27,2,0,2,2,0,0,0,7.4,0.0,0.0,,0.0,2784.0,5569.0,625.0,20106.0,2178.0,0.0,10213.0,28.0,111.0
+Helix,false,Impact,19,2,0,2,1,0,0,0,10.5,0.0,0.0,,0.0,2784.0,5569.0,625.0,20106.0,2178.0,0.0,10213.0,28.0,111.0

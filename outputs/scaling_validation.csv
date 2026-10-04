@@ -1,6 +1,6 @@
-brand,panel_us_visits,est_us_visits_per_day,similarweb_us_visits_per_day,ratio_est_to_similarweb
-DreamCloud,27,29405.0,59323.0,0.5
-Nectar,51,55543.0,158857.0,0.35
-Walmart,16401,17861943.0,17861943.0,1.0
-Saatva,25,27227.0,68614.0,0.4
-Helix,19,20692.0,,
+brand,panel_us_visits,similarweb_us_visits_per_day,ratio_with_f_retail,ratio_with_f_mattress
+DreamCloud,27,59323.0,0.5,1.27
+Nectar,51,158857.0,0.35,0.89
+Walmart,16401,17861943.0,1.0,2.56
+Saatva,25,68614.0,0.4,1.01
+Helix,19,,,

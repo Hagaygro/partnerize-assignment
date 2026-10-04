@@ -1,0 +1,16 @@
+brand,look_back,clicks,pct_clicks_strong,cr_strong_pct,cr_other_pct,pct_orders_from_strong,pct_clicks_checkout,cr_checkout_pct,median_min_to_order_checkout
+DreamCloud,30 min (base),2,0.0,,0.0,,0.0,,
+DreamCloud,10 min,2,0.0,,0.0,,0.0,,
+DreamCloud,2 min,2,0.0,,0.0,,0.0,,
+Helix,30 min (base),2,0.0,,0.0,,0.0,,
+Helix,10 min,2,0.0,,0.0,,0.0,,
+Helix,2 min,2,0.0,,0.0,,0.0,,
+Nectar,30 min (base),4,25.0,0.0,0.0,,0.0,,
+Nectar,10 min,4,25.0,0.0,0.0,,0.0,,
+Nectar,2 min,4,25.0,0.0,0.0,,0.0,,
+Saatva,30 min (base),6,33.3,0.0,0.0,,0.0,,
+Saatva,10 min,6,33.3,0.0,0.0,,0.0,,
+Saatva,2 min,6,33.3,0.0,0.0,,0.0,,
+Walmart,30 min (base),6449,23.4,5.82,0.49,78.6,6.7,13.02,2.3
+Walmart,10 min,6449,18.7,6.63,0.61,71.4,5.6,14.05,2.3
+Walmart,2 min,6449,13.2,6.8,0.96,51.8,4.1,15.27,2.0

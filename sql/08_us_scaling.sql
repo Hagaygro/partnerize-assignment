@@ -4,17 +4,24 @@
 -- The data is a browsing panel, a small sample of internet users. To estimate
 -- US totals, the panel counts are multiplied by a scale factor F.
 --
--- Method: anchor-site calibration (ratio estimator). Pick a large, stable,
--- US-centric site with a public traffic figure. F is its true daily US visits
--- divided by the panel's daily US visits to it. walmart.com is the anchor: it
--- is in the analysis, it is 95% US, and it is the panel's best-measured retail
--- site (~30k visits per day).
+-- Method: calibration on a known site (ratio estimator). For a site with a public
+-- traffic figure, F = its true daily US visits ÷ the panel's US visits to it that day:
 --   F = (Similarweb monthly visits × US share ÷ days in month) ÷ panel US visits
--- Validation: F applied to the mattress sites' panel visits should land near
--- their own Similarweb figures. Cross-check: US internet users ÷ panel US users.
 --
--- Assumption: the panel covers the mattress sites at the same rate it covers
--- walmart.com (no device or demographic skew between the two audiences).
+-- The panel does not cover every audience at the same rate. Calibrated on
+-- walmart.com, F puts the mattress sites at only 35–50% of their own Similarweb
+-- traffic. So each brand is scaled with the factor calibrated on its own audience:
+--   F_retail    walmart.com                                → Walmart
+--   F_mattress  Saatva + Nectar + DreamCloud pooled        → the four mattress brands
+--               (Helix has no public visit figure; pooling ~100 panel visits
+--                is far more stable than calibrating each brand on 19–51)
+-- The other factor is reported as the alternative estimate. For the mattress
+-- brands, F_retail is the conservative low end. The population ratio (US internet
+-- users ÷ panel US users) is a cross-check.
+--
+-- Caveats: Similarweb's latest public month is August (the Labor Day mattress sale
+-- season), so F_mattress likely overstates an ordinary May day somewhat. The
+-- panel-user count includes mirror IDs.
 -- =============================================================================
 
 -- 1) US panel users. The data has no country field. A user is non-US when ≥20% of
@@ -53,34 +60,52 @@ CREATE OR REPLACE MACRO mattress_cr_high() AS 0.02;
 -- 3) Scale factors --------------------------------------------------------------
 CREATE OR REPLACE TABLE scaling AS
 WITH panel AS (
-    SELECT count(*) FILTER (WHERE v.brand = 'Walmart') AS walmart_us_visits_panel
+    SELECT b.brand, b.domain, count(*) AS panel_us_visits
     FROM brand_visits v
-    JOIN panel_users u USING (user_id)
-    WHERE u.is_us
+    JOIN brands b USING (brand)
+    WHERE v.user_id IN (SELECT user_id FROM panel_users WHERE is_us)
+    GROUP BY b.brand, b.domain
 ),
-anchor AS (
-    SELECT monthly_visits * us_share / 31 AS walmart_us_visits_per_day      -- August has 31 days
-    FROM external_benchmarks
-    WHERE domain = 'walmart.com'
+bench AS (
+    SELECT p.brand, p.panel_us_visits,
+           x.monthly_visits * x.us_share / 31 AS sw_us_visits_per_day        -- August has 31 days
+    FROM panel p
+    JOIN external_benchmarks x USING (domain)
+    WHERE x.monthly_visits IS NOT NULL
 )
-SELECT p.walmart_us_visits_panel,
-       a.walmart_us_visits_per_day,
-       a.walmart_us_visits_per_day / p.walmart_us_visits_panel             AS scale_factor,          -- F (primary)
-       (SELECT count_if(is_us) FROM panel_users)                          AS us_panel_users,
-       us_internet_users() / (SELECT count_if(is_us) FROM panel_users)     AS scale_factor_population -- cross-check
-FROM panel p, anchor a;
+SELECT (SELECT panel_us_visits      FROM bench WHERE brand = 'Walmart')                          AS walmart_us_visits_panel,
+       (SELECT sw_us_visits_per_day FROM bench WHERE brand = 'Walmart')                          AS walmart_us_visits_per_day,
+       (SELECT sw_us_visits_per_day / panel_us_visits FROM bench WHERE brand = 'Walmart')        AS scale_factor_retail,
+       (SELECT sum(panel_us_visits)      FROM bench WHERE brand <> 'Walmart')                    AS mattress_us_visits_panel,
+       (SELECT sum(sw_us_visits_per_day) FROM bench WHERE brand <> 'Walmart')                    AS mattress_us_visits_per_day,
+       (SELECT sum(sw_us_visits_per_day) / sum(panel_us_visits) FROM bench WHERE brand <> 'Walmart') AS scale_factor_mattress,
+       (SELECT count_if(is_us) FROM panel_users)                                                AS us_panel_users,
+       us_internet_users() / (SELECT count_if(is_us) FROM panel_users)                          AS scale_factor_population;
 
--- 4) Validation: scaled panel visits vs Similarweb, per brand site --------------
+-- Which factor each brand uses (primary) and the alternative: for the mattress
+-- brands the walmart-calibrated factor (conservative low end), for Walmart the
+-- population ratio.
+CREATE OR REPLACE TABLE brand_scale AS
+SELECT b.brand,
+       CASE WHEN b.brand = 'Walmart' THEN s.scale_factor_retail     ELSE s.scale_factor_mattress END AS scale_factor,
+       CASE WHEN b.brand = 'Walmart' THEN s.scale_factor_population ELSE s.scale_factor_retail   END AS scale_factor_alt
+FROM brands b
+CROSS JOIN scaling s;
+
+-- 4) Validation: scaled panel visits ÷ Similarweb visits, per brand and factor -----
+-- (F_mattress is calibrated on the pooled mattress brands, so for them the ratios
+--  average ~1 by construction; their spread shows how consistent the panel is.)
 CREATE OR REPLACE TABLE scaling_validation AS
 SELECT b.brand,
-       count(v.user_id)                                                   AS panel_us_visits,
-       round(count(v.user_id) * any_value(s.scale_factor))                AS est_us_visits_per_day,
-       round(any_value(x.monthly_visits * x.us_share / 31))               AS similarweb_us_visits_per_day,
-       round(count(v.user_id) * any_value(s.scale_factor)
-             / nullif(any_value(x.monthly_visits * x.us_share / 31), 0), 2) AS ratio_est_to_similarweb
+       count(v.user_id)                                                          AS panel_us_visits,
+       round(any_value(x.monthly_visits * x.us_share / 31))                      AS similarweb_us_visits_per_day,
+       round(count(v.user_id) * any_value(s.scale_factor_retail)
+             / nullif(any_value(x.monthly_visits * x.us_share / 31), 0), 2)      AS ratio_with_f_retail,
+       round(count(v.user_id) * any_value(s.scale_factor_mattress)
+             / nullif(any_value(x.monthly_visits * x.us_share / 31), 0), 2)      AS ratio_with_f_mattress
 FROM brands b
-LEFT JOIN brand_visits v       ON v.brand = b.brand
-                              AND v.user_id IN (SELECT user_id FROM panel_users WHERE is_us)
+LEFT JOIN brand_visits v        ON v.brand = b.brand
+                               AND v.user_id IN (SELECT user_id FROM panel_users WHERE is_us)
 LEFT JOIN external_benchmarks x ON x.domain = b.domain
 CROSS JOIN scaling s
 GROUP BY b.brand;
