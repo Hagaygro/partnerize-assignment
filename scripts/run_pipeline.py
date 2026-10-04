@@ -19,7 +19,9 @@ import time
 import duckdb
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
-EXPORTS = []  # result tables to write to outputs/*.csv (filled in as the analysis grows)
+# Result tables written to outputs/*.csv
+EXPORTS = ["dq_profile", "dq_hourly", "scaling", "scaling_validation", "competitor_summary",
+           "traffic_mix", "publisher_summary"]
 
 
 def main():

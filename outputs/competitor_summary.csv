@@ -1,0 +1,6 @@
+brand,is_client,networks,panel_visits,panel_affiliate_clicks,panel_affiliate_users,panel_publishers,panel_converted_clicks,panel_conversions_all_sources,pct_visits_from_affiliate,pct_clicks_reaching_checkout,pct_clicks_converting,pct_orders_affiliate_attributed,pct_clicks_strong_hijack_signal,est_us_affiliate_clicks,est_us_affiliate_clicks_lo95,est_us_affiliate_clicks_hi95,est_us_converted_clicks,est_us_converted_clicks_hi95,est_us_affiliate_clicks_brand_calibrated,est_us_converted_clicks_benchmark_lo,est_us_converted_clicks_benchmark_hi
+Saatva,true,Partnerize,25,5,4,3,0,0,16.0,0.0,0.0,,20.0,5445.0,1755.0,12708.0,0.0,3995.0,13723.0,27.0,109.0
+Walmart,false,"Impact, UTM only",16401,6449,1020,110,112,855,6.4,5.6,1.74,13.1,25.7,7023454.0,6853068.0,7197006.0,121977.0,146771.0,7023454.0,,
+Nectar,false,Impact,51,4,2,2,0,0,3.9,0.0,0.0,,25.0,4356.0,1172.0,11153.0,0.0,3995.0,12459.0,22.0,87.0
+Helix,false,Impact,19,2,2,1,0,0,10.5,0.0,0.0,,0.0,2178.0,245.0,7864.0,0.0,3995.0,,11.0,44.0
+DreamCloud,false,Impact,27,2,2,2,0,0,7.4,0.0,0.0,,0.0,2178.0,245.0,7864.0,0.0,3995.0,4394.0,11.0,44.0

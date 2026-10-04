@@ -43,6 +43,13 @@ FROM (VALUES
 
 CREATE OR REPLACE MACRO us_internet_users() AS 324e6;   -- DataReportal, Digital 2026 (93.1% of population)
 
+-- Conversion-rate range for mattress e-commerce. It is used only where the panel
+-- day has too few orders to measure a rate: zero for every mattress brand.
+-- Source: Grips Intelligence retailer pages (us-mattress.com and
+-- mattressfirmep.com 0.5–1.0%, mattressfirm.com 2.0–2.5%).
+CREATE OR REPLACE MACRO mattress_cr_low()  AS 0.005;
+CREATE OR REPLACE MACRO mattress_cr_high() AS 0.02;
+
 -- 3) Scale factors --------------------------------------------------------------
 CREATE OR REPLACE TABLE scaling AS
 WITH panel AS (

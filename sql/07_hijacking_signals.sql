@@ -9,13 +9,17 @@
 -- commission on a sale it did not drive.
 --
 -- The clickstream shows what the user did just before each affiliate landing,
--- so every click gets these indicators:
---   multi_brand_burst   landings on 2+ other advertisers within ±2 min (forced/stuffed clicks)
+-- so every click gets these indicators. The first three are strong signals
+-- that the publisher took credit for a visit it did not create:
 --   in_checkout_before  was in the brand's cart/checkout in the 30 min before (coupon-extension pattern)
 --   already_on_site     was on the brand's site without an affiliate tag in the 30 min before
 --   paid_search_id      landing URL carries a Google/Bing ad click id, so the publisher bought the ad
+-- Medium / review signals:
 --   brand_search_60s    searched for the brand's name in the 60s before
 --   coupon_ext_60s      a coupon / cash-back site or extension fired in the 60s before
+--   multi_brand_burst   landings on 2+ other advertisers within ±2 min. This is a review signal
+--                       only: a real user opening a listicle's links in tabs looks the same, so it
+--                       counts as stuffing only if the user then never engages with those sites
 --   no_referrer         no activity at all in the 30 min before (weak: also true for app/email clicks)
 -- =============================================================================
 
@@ -69,16 +73,15 @@ SELECT c.*,
        x.other_advertisers_2m >= 2                         AS multi_brand_burst,
        x.other_advertisers_2m, x.no_referrer, x.prev_host, x.secs_since_prev,
        CASE
-           WHEN x.other_advertisers_2m >= 2  THEN '1 Multi-brand click burst'
-           WHEN x.in_checkout_before         THEN '2 Injected at cart/checkout'
-           WHEN x.already_on_site            THEN '3 User already on brand site'
-           WHEN c.has_paid_search_click_id   THEN '4 Publisher-bought search ad'
-           WHEN x.brand_search_60s           THEN '5 Brand search just before'
-           WHEN x.coupon_ext_60s             THEN '6 Coupon/cash-back just before'
+           WHEN x.in_checkout_before         THEN '1 Injected at cart/checkout'
+           WHEN x.already_on_site            THEN '2 User already on brand site'
+           WHEN c.has_paid_search_click_id   THEN '3 Publisher-bought search ad'
+           WHEN x.brand_search_60s           THEN '4 Brand search just before'
+           WHEN x.coupon_ext_60s             THEN '5 Coupon/cash-back just before'
+           WHEN x.other_advertisers_2m >= 2  THEN '6 Multi-brand burst (review)'
            WHEN x.no_referrer                THEN '7 No visible referrer (weak)'
            ELSE                                   '8 No hijack indicator'
        END                                                  AS primary_signal,
-       (x.other_advertisers_2m >= 2 OR x.in_checkout_before OR x.already_on_site
-        OR c.has_paid_search_click_id)                      AS strong_hijack_signal
+       (x.in_checkout_before OR x.already_on_site OR c.has_paid_search_click_id) AS strong_hijack_signal
 FROM affiliate_clicks c
 JOIN click_context x USING (brand, click_key);

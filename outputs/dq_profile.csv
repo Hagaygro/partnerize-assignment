@@ -1,0 +1,2 @@
+rows,distinct_event_ids,duplicate_rows,users,sessions,first_event_utc,last_event_utc,days,rows_with_nulls
+48395506,48395506,7126127,783982,1994372,2026-05-01 00:00:00,2026-05-01 23:59:59,1,0
