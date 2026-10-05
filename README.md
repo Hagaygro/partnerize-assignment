@@ -165,6 +165,9 @@ scripts/
   extract_data.py          # extracts the Parquet files, verifies CRCs
   run_pipeline.py          # runs sql/ in order with row-count checks, exports outputs/
 outputs/                   # aggregated result tables (CSV)
+deck/
+  build_deck.py            # builds the presentation from outputs/*.csv
+  saatva_affiliate_analysis.pptx   # the deck: upload to Google Drive, open with Google Slides
 data/                      # local only (git-ignored): archive, Parquet files, DuckDB database
 ```
 
@@ -176,6 +179,7 @@ python3 -m venv .venv
 .venv/bin/python scripts/download_data.py   # ~9.5 GB
 .venv/bin/python scripts/extract_data.py    # -> data/raw/*.parquet (~12.6 GB)
 .venv/bin/python scripts/run_pipeline.py    # ~30 s; tables in data/analysis.duckdb, CSVs in outputs/
+.venv/bin/python deck/build_deck.py         # -> deck/saatva_affiliate_analysis.pptx
 ```
 
 The data is not committed to the repository. It was provided for this assignment only, and

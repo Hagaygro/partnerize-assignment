@@ -1,0 +1,19 @@
+brand,primary_signal,clicks,converted_clicks,cr_pct,pct_of_clicks,pct_of_converted_clicks
+DreamCloud,6 Multi-brand burst (review),1,0,0.0,50.0,
+DreamCloud,8 No hijack indicator,1,0,0.0,50.0,
+Helix,7 No visible referrer (weak),1,0,0.0,50.0,
+Helix,8 No hijack indicator,1,0,0.0,50.0,
+Nectar,2 User already on brand site,1,0,0.0,25.0,
+Nectar,6 Multi-brand burst (review),1,0,0.0,25.0,
+Nectar,8 No hijack indicator,2,0,0.0,50.0,
+Saatva,0 Click without landing (stuffing),1,0,0.0,16.7,
+Saatva,3 Publisher-bought search ad,1,0,0.0,16.7,
+Saatva,6 Multi-brand burst (review),2,0,0.0,33.3,
+Saatva,8 No hijack indicator,2,0,0.0,33.3,
+Walmart,1 Injected at cart/checkout,430,56,13.02,6.7,50.0
+Walmart,2 User already on brand site,1055,32,3.03,16.4,28.6
+Walmart,3 Publisher-bought search ad,27,0,0.0,0.4,0.0
+Walmart,5 Coupon/cash-back just before,74,3,4.05,1.1,2.7
+Walmart,6 Multi-brand burst (review),4,0,0.0,0.1,0.0
+Walmart,7 No visible referrer (weak),148,2,1.35,2.3,1.8
+Walmart,8 No hijack indicator,4711,19,0.4,73.1,17.0

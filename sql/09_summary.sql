@@ -1,9 +1,11 @@
 -- =============================================================================
 -- 09 · Results tables (US panel users only)
 -- -----------------------------------------------------------------------------
--- competitor_summary   one row per brand: traffic, affiliate clicks, outcomes, US estimates
--- traffic_mix          share of each brand's visits by entry source
--- publisher_summary    one row per brand × publisher, with outcome and hijack indicators
+-- competitor_summary     one row per brand: traffic, affiliate clicks, outcomes, US estimates
+-- traffic_mix            share of each brand's visits by entry source
+-- publisher_summary      one row per brand × publisher, with outcome and hijack indicators
+-- signal_summary         one row per brand × primary hijack signal: share of clicks and of orders
+-- flagged_click_sources  where flagged clicks come from: the host the user was on just before
 --
 -- US estimates = panel count × the brand's scale factor (08: F_mattress for the
 -- mattress brands, F_retail for Walmart); `_alt` uses the alternative factor
@@ -103,7 +105,7 @@ SELECT brand, entry_source,
 FROM brand_visit_sources
 WHERE user_id IN (SELECT user_id FROM panel_users WHERE is_us)
 GROUP BY brand, entry_source
-ORDER BY brand, visits DESC;
+ORDER BY brand, visits DESC, entry_source;
 
 CREATE OR REPLACE TABLE publisher_summary AS
 SELECT brand,
@@ -123,8 +125,36 @@ SELECT brand,
        count_if(multi_brand_burst)                             AS burst,
        count_if(no_referrer)                                   AS no_referrer,
        round(100.0 * count_if(strong_hijack_signal) / count(*), 1) AS pct_strong_signal,
-       any_value(publisher_sub_id)                             AS example_sub_id,
-       any_value(coupon)                                       AS example_coupon
+       min(publisher_sub_id)                                   AS example_sub_id,
+       min(coupon)                                             AS example_coupon
 FROM us_clicks
 GROUP BY brand, network, publisher
-ORDER BY brand, clicks DESC;
+ORDER BY brand, clicks DESC, network, publisher;
+
+-- Each click counts once, under its first-ranked signal (07: primary_signal).
+CREATE OR REPLACE TABLE signal_summary AS
+SELECT brand,
+       primary_signal,
+       count(*)                                                                         AS clicks,
+       count_if(converted)                                                              AS converted_clicks,
+       round(100.0 * count_if(converted) / count(*), 2)                                 AS cr_pct,
+       round(100.0 * count(*) / sum(count(*)) OVER (PARTITION BY brand), 1)             AS pct_of_clicks,
+       round(100.0 * count_if(converted)
+             / nullif(sum(count_if(converted)) OVER (PARTITION BY brand), 0), 1)        AS pct_of_converted_clicks
+FROM us_clicks
+GROUP BY brand, primary_signal
+ORDER BY brand, primary_signal;
+
+-- Hosts with at least 5 flagged clicks, so no single user's browsing is exposed.
+CREATE OR REPLACE TABLE flagged_click_sources AS
+SELECT brand,
+       primary_signal,
+       prev_host,
+       count(*)                                  AS clicks,
+       count_if(converted)                       AS converted_clicks,
+       median(secs_since_prev)                   AS median_secs_since_prev
+FROM us_clicks
+WHERE strong_hijack_signal OR coupon_ext_60s
+GROUP BY brand, primary_signal, prev_host
+HAVING count(*) >= 5
+ORDER BY brand, primary_signal, clicks DESC;
