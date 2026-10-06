@@ -23,7 +23,9 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 EXPORTS = ["dq_profile", "dq_hourly", "scaling", "scaling_validation", "competitor_summary",
            "traffic_mix", "publisher_summary", "brand_funnel", "hijack_sensitivity",
            "signal_summary", "flagged_click_sources", "incrementality",
-           "incrementality_summary", "commission_at_risk", "seasonal_scaling"]
+           "incrementality_summary", "commission_at_risk", "seasonal_scaling",
+           "panel_profile", "panel_coverage", "hijack_by_segment", "hijack_reweighted", "category_funnel",
+           "brand_funnel_cat", "cross_shopping", "journey_order", "click_funnel_stage"]
 
 
 def main():
@@ -53,7 +55,8 @@ def main():
 
     os.makedirs("outputs", exist_ok=True)
     for table in EXPORTS:
-        con.execute(f"COPY {table} TO 'outputs/{table}.csv' (HEADER)")
+        # sorted on every column, so a rerun writes byte-identical files
+        con.execute(f"COPY (SELECT * FROM {table} ORDER BY ALL) TO 'outputs/{table}.csv' (HEADER)")
         print(f"exported outputs/{table}.csv")
 
 

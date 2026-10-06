@@ -1,0 +1,7 @@
+dimension,segment,users,clicks,pct_clicks_flagged,orders,pct_orders_flagged
+Activity tier,1 Light (≤ median),168,248,32.3,10,50.0
+Activity tier,2 Mid (to p90),556,1456,41.8,66,81.8
+Activity tier,3 Heavy (p90–p99),248,2805,19.3,33,84.8
+Activity tier,4 Very heavy (> p99),31,1940,15.1,2,50.0
+Coupon / cash-back user,No,821,5911,19.5,70,75.7
+Coupon / cash-back user,Yes,182,538,68.4,41,85.4

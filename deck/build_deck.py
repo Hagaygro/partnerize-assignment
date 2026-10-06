@@ -3,7 +3,7 @@
 Usage:
     .venv/bin/python deck/build_deck.py        # -> deck/saatva_affiliate_analysis.pptx
 
-Ten slides plus three backup slides. Each slide carries one message, one chart or
+Thirteen slides plus three backup slides. Each slide carries one message, one chart or
 visual, and few words; the detail is in the speaker notes. The numbers come from
 outputs/*.csv; the case studies and external benchmarks are written into the text.
 
@@ -85,6 +85,14 @@ def load():
         "incr": {(r["stage"], r["grp"].startswith("Affiliate")): r for r in rows("incrementality")},
         "incr_sum": rows("incrementality_summary")[0],
         "risk": {r["scope"]: r for r in rows("commission_at_risk")},
+        "panel": rows("panel_profile")[0],
+        "coverage": rows("panel_coverage"),
+        "segment": rows("hijack_by_segment"),
+        "reweight": rows("hijack_reweighted"),
+        "cat_funnel": rows("category_funnel"),
+        "brand_cat": {r["brand"]: r for r in rows("brand_funnel_cat")},
+        "cross": {r["brand"]: r for r in rows("cross_shopping")},
+        "stage": [r for r in rows("click_funnel_stage") if r["brand"] == "Walmart"],
     }
 
 
@@ -328,7 +336,8 @@ def content_slide(prs, n, kicker, title, notes):
     text(s, L, 7.02, 9, 0.25, FOOTER, size=9, color=MUTED)
     dot(s, R - 0.5, 7.065, P_ORANGE, 0.14)
     dot(s, R - 0.41, 7.065, P_BLUE, 0.14)
-    text(s, R - 0.22, 7.02, 0.22, 0.25, str(n), size=9, color=MUTED, align="r")
+    # numbered by position, so slides can be added without renumbering (n is kept for readability only)
+    text(s, R - 0.32, 7.02, 0.32, 0.25, str(len(prs.slides)), size=9, color=MUTED, align="r")
     s.notes_slide.notes_text_frame.text = notes
     return s
 
@@ -455,7 +464,7 @@ def slide_share(prs, d):
 
 def slide_volume(prs, d):
     s = content_slide(prs, 4, "Results · US estimates", "Saatva: ~16.7K US affiliate clicks a day", (
-        "US estimate = panel clicks × a scale factor calibrated on the mattress audience (next slide). Saatva comes "
+        "US estimate = panel clicks × a scale factor calibrated on the mattress audience (slide 6). Saatva comes "
         "to about 16.7K clicks a day, with a 95% interval of 6.1K–36.4K; with the Walmart-calibrated factor the "
         "conservative estimate is 6.5K. The four intervals overlap, so one day can't rank the mattress brands by "
         "volume. No mattress order followed an affiliate click within the day, which is expected for a "
@@ -498,6 +507,166 @@ def slide_volume(prs, d):
          f"~{k(wm['est_us_affiliate_clicks'])} clicks a day, {pct(wm['pct_clicks_converting'], 2)} convert "
          f"(~{k(wm['est_us_converted_clicks'])}).",
          size=12, color=MUTED)
+
+
+def slide_journey(prs, d):
+    f = {int(r["step"]): int(r["users"]) for r in d["cat_funnel"]}
+    cr, bc = d["cross"], d["brand_cat"]
+    sa = cr["Saatva"]
+    s = content_slide(prs, 0, "Results · the shopper's journey", "Mattress shoppers compare about two brands", (
+        "Only a panel shows this, because a brand's own analytics stop at its own domain. Across ~20 mattress "
+        f"brands, {f[1]} US panel users shopped for a mattress that day. {f[3]} reached a brand site, {f[4]} a product "
+        f"page, {f[5]} a cart and {f[7]} ordered: a long, considered journey, which is why a same-day window finds "
+        f"almost no orders. Visitors of each of the four brands looked at about two brands; {sa['pct_saw_another_brand'][:-2]}% "
+        "of Saatva's visitors also opened another brand, mostly Mattress Firm and Nectar. For Saatva's program, "
+        "that makes comparison content (Saatva vs Nectar, best-mattress lists) the place to win the click, which is "
+        "where the recruiting recommendation points. One day and a few hundred shoppers: read the shape, not the "
+        "rates. Review sites look rare here partly because the panel does not record search engines (slide 7)."))
+    text(s, L, 1.65, 6.5, 0.26, "US mattress shoppers in the panel, by the furthest step reached", size=12,
+         color=MUTED, bold=True)
+    steps = [(1, "Shopped for a mattress"), (3, "Visited a brand site"), (4, "Viewed a product page"),
+             (5, "Reached cart"), (6, "Reached checkout"), (7, "Ordered")]
+    x0, scale, y0, pitch, bh = 2.95, 3.6 / f[1], 2.1, 0.62, 0.38
+    for i, (k_, label) in enumerate(steps):
+        y = y0 + i * pitch
+        text(s, L, y + 0.04, 2.3, 0.3, label, size=14, color=INK)
+        hbar(s, x0, y, f[k_] * scale, bh, P_BLUE)
+        text(s, x0 + f[k_] * scale + 0.1, y + 0.04, 1.2, 0.3, f"{f[k_]:,}", size=14, color=INK, bold=True)
+    line(s, x0, y0 - 0.12, x0, y0 + 5 * pitch + bh + 0.1, INK, 0.75)
+
+    tx, tw = 8.0, R - 8.0
+    text(s, tx, 1.65, tw, 0.26, "Visitors who also opened another mattress brand", size=12, color=MUTED, bold=True)
+    for i, b in enumerate(("Saatva", "Nectar", "DreamCloud", "Helix")):
+        r = cr[b]
+        y = 2.1 + i * 0.62
+        client = b == "Saatva"
+        val = num(r["pct_saw_another_brand"])
+        text(s, tx, y + 0.02, 1.4, 0.3, b, size=14, color=INK, bold=client)
+        hbar(s, tx + 1.45, y, val / 100 * 2.2, 0.32, S_MARK if client else GREY_MARK)
+        text(s, tx + 1.45 + val / 100 * 2.2 + 0.1, y + 0.02, 1.4, 0.3, f"{val:.0f}%", size=14, color=INK, bold=client)
+    box(s, tx, 4.75, tw, 1.9, fill=BRONZE_TINT)
+    text(s, tx + 0.25, 4.9, tw - 0.5, 0.28, "Who Saatva's visitors also look at", size=12, color=MUTED, bold=True)
+    others = [o.strip() for o in sa["top_other_brands"].split(",")][:3]
+    names = {"mattressfirm": "Mattress Firm", "nectarsleep": "Nectar", "dreamcloudsleep": "DreamCloud",
+             "helixsleep": "Helix", "purple": "Purple", "brooklynbedding": "Brooklyn Bedding", "sienasleep": "Siena"}
+    pretty = []
+    for o in others:
+        nm, cnt = o.split(" (")
+        pretty.append(f"{names.get(nm, nm)} ({cnt}")
+    text(s, tx + 0.25, 5.22, tw - 0.5, 0.65, ",  ".join(pretty), size=15, color=NAVY, bold=True, spacing=1.05)
+    text(s, tx + 0.25, 5.98, tw - 0.5, 0.6, "Comparison content is where Saatva wins or loses the shopper",
+         size=13, color=INK, spacing=1.05)
+    text(s, L, 6.35, 7.0, 0.3, f"US panel users, 1 May 2026. Saatva: {bc['saatva']['visitors']} visitors, "
+         f"{bc['saatva']['product_page']} reached a product page.", size=12, color=MUTED)
+
+
+def slide_panel(prs, d):
+    pp, cov = d["panel"], {r["site"]: int(r["panel_users"]) for r in d["coverage"]}
+    seg = {(r["dimension"], r["segment"]): r for r in d["segment"]}
+    rw = {r["coupon_user_weight"].split(" ")[0]: r for r in d["reweight"]}
+    tiers = [r for r in d["segment"] if r["dimension"] == "Activity tier"]
+    s = content_slide(prs, 0, "Method · know the panel", "The panel sees some sites, not the whole web", (
+        f"Every number here is a panel number, so the panel was checked like any data source. It holds "
+        f"{num(pp['panel_user_ids']) / 1e3:.0f}K user ids in one day, {pp['pct_us']}% US; the top 10% of users produce "
+        f"{pp['pct_events_top10pct_users']}% of all events. It is not a uniform sample of browsing: PayPal, MSN, "
+        "Walmart and the New York Times are large, while Google, YouTube, Facebook and Amazon are almost absent. "
+        "So shares of 'all browsing' are meaningless, only within-site measures are valid, and each audience needs "
+        "its own calibration, which is why the mattress brands are not scaled on Walmart. It also explains a "
+        "signal: search engines are not recorded, so 'brand search before the click' can never fire, and a click "
+        "with no visible referrer may simply come from a site the panel does not see; it is kept as weak. "
+        "Recruitment bias: panels are often recruited through browser extensions, so coupon-extension users may "
+        "be over-represented, and they do carry more flagged clicks. Dropping them entirely moves the share of "
+        f"Walmart's affiliate orders from flagged clicks from {rw['1']['pct_orders_flagged']}% to "
+        f"{rw['0']['pct_orders_flagged']}%, and every activity tier shows the same pattern. The hijacking result "
+        "is not a panel artefact."))
+    text(s, L, 1.65, 6.6, 0.26, "Panel users on 1 May, selected sites", size=12, color=MUTED, bold=True)
+    sites = [("paypal.com", "PayPal"), ("msn.com", "MSN"), ("walmart.com", "Walmart"), ("nytimes.com", "NYT"),
+             ("capitaloneshopping.com", "Capital One Shopping"), ("amazon.com", "Amazon"), ("google.com", "Google"),
+             ("facebook.com", "Facebook"), ("youtube.com", "YouTube"), ("target.com", "Target")]
+    x0, scale, y0, pitch, bh = 2.75, 4.0 / max(cov.values()), 2.05, 0.43, 0.27
+    for i, (site, label) in enumerate(sites):
+        y = y0 + i * pitch
+        n = cov.get(site, 0)
+        missing = n < 100
+        text(s, L, y - 0.01, 2.1, 0.3, label, size=13, color=MUTED if missing else INK)
+        if not missing:
+            hbar(s, x0, y, n * scale, bh, GREY_MARK if site != "walmart.com" else P_BLUE)
+        text(s, x0 + (n * scale if not missing else 0) + 0.1, y - 0.01, 2.2, 0.3,
+             f"{n:,}" + ("  · not covered" if missing else ""), size=13, color=ORANGE_TEXT if missing else INK,
+             bold=missing)
+    line(s, x0, y0 - 0.1, x0, y0 + 9 * pitch + bh + 0.08, INK, 0.75)
+
+    tx, tw = 8.1, R - 8.1
+    facts = [
+        (f"{num(pp['panel_user_ids']) / 1e3:.0f}K users", f"{pp['pct_us']}% US · top 10% make {num(pp['pct_events_top10pct_users']):.0f}% of events"),
+        ("No search engines", "\"Brand search\" can't fire; \"no referrer\" stays weak"),
+        (f"{num(rw['1']['pct_orders_flagged']):.0f}% → {num(rw['0']['pct_orders_flagged']):.0f}%",
+         "Walmart orders from flagged clicks, with coupon-extension users dropped"),
+    ]
+    for i, (big, small) in enumerate(facts):
+        y = 1.65 + i * 1.62
+        box(s, tx, y, tw, 1.45, fill=PANEL if i < 2 else ORANGE_TINT)
+        text(s, tx + 0.3, y + 0.18, tw - 0.6, 0.55, big, size=26, color=NAVY, bold=True)
+        text(s, tx + 0.3, y + 0.8, tw - 0.6, 0.55, small, size=13, color=INK, spacing=1.05)
+    lo = min(num(r["pct_orders_flagged"]) for r in tiers)
+    hi = max(num(r["pct_orders_flagged"]) for r in tiers)
+    text(s, L, 6.55, 7.3, 0.3, f"Same pattern in every activity tier: {lo:.0f}–{hi:.0f}% of orders from flagged clicks.",
+         size=12, color=MUTED)
+
+
+def slide_stage(prs, d):
+    st = {r["stage_at_click"][2:]: r for r in d["stage"]}
+    late = [st["Already in cart"], st["Already at checkout"]]
+    late_clicks = sum(num(r["pct_clicks"]) for r in late)
+    late_orders = sum(num(r["pct_orders"]) for r in late)
+    start = st["Click starts the visit"]
+    s = content_slide(prs, 0, "Attribution hijacking · the funnel view",
+                      f"{late_clicks:.0f}% of clicks land after the cart and take {late_orders:.0f}% of orders", (
+        "Where in the funnel does the affiliate click arrive? A genuine referral starts the visit: the shopper reads "
+        "a publisher's page and clicks through. A hijacked click arrives at the bottom, once the shopper is already "
+        f"in the cart or at checkout. At Walmart, {num(start['pct_clicks']):.0f}% of affiliate clicks start the visit, "
+        f"but they carry only {num(start['pct_orders']):.0f}% of the credited orders and convert at "
+        f"{num(start['conversion_pct']):.1f}%. Clicks that fire after the cart are {late_clicks:.0f}% of clicks and "
+        f"{late_orders:.0f}% of the orders, converting at {num(st['Already in cart']['conversion_pct']):.0f}–"
+        f"{num(st['Already at checkout']['conversion_pct']):.0f}%. The commission follows the last click, so it flows "
+        "to the bottom of the funnel, where the publisher did the least. Stage = the furthest point on walmart.com in "
+        "the 30 minutes before the click, since any earlier affiliate click."))
+    order = ["Click starts the visit", "Already browsing the site", "Already on a product page", "Already in cart",
+             "Already at checkout"]
+    labels = {"Click starts the visit": "Click starts the visit", "Already browsing the site": "Already browsing",
+              "Already on a product page": "On a product page", "Already in cart": "In the cart",
+              "Already at checkout": "At checkout"}
+    text(s, L, 1.65, 7, 0.26, "Walmart affiliate clicks, by the stage the shopper had reached", size=12,
+         color=MUTED, bold=True)
+    legend(s, L, 1.98, [("Share of clicks", GREY_MARK), ("Share of affiliate orders", P_ORANGE)])
+    x0, scale, y0, pitch, bh = 2.75, 0.052, 2.6, 0.78, 0.25
+    for i, name in enumerate(order):
+        r = st[name]
+        y = y0 + i * pitch
+        late_row = name in ("Already in cart", "Already at checkout")
+        text(s, L, y + 0.1, 2.1, 0.3, labels[name], size=14, color=INK, bold=late_row)
+        for j, (col, color) in enumerate((("pct_clicks", GREY_MARK), ("pct_orders", P_ORANGE))):
+            val = num(r[col])
+            by = y + j * (bh + 0.04)
+            hbar(s, x0, by, val * scale, bh, color)
+            text(s, x0 + val * scale + 0.1, by - 0.02, 0.9, 0.28, f"{val:.0f}%", size=13, color=INK, bold=j == 1)
+    line(s, x0, y0 - 0.12, x0, y0 + 4 * pitch + 2 * bh + 0.12, INK, 0.75)
+
+    tx, tw = 8.15, R - 8.15
+    box(s, tx, 1.65, tw, 2.35, fill=PANEL)
+    dot(s, tx + 0.3, 1.98, P_ORANGE)
+    text(s, tx + 0.55, 1.92, tw - 0.8, 0.28, "Conversion of the click", size=12, color=MUTED, bold=True)
+    text(s, tx + 0.3, 2.27, tw - 0.6, 0.75,
+         f"{num(st['Already at checkout']['conversion_pct']):.0f}% vs {num(start['conversion_pct']):.1f}%", size=40,
+         color=NAVY, bold=True)
+    text(s, tx + 0.3, 3.05, tw - 0.6, 0.3, "at checkout vs starting the visit", size=14, color=INK, bold=True)
+    text(s, tx + 0.3, 3.45, tw - 0.6, 0.3, "and the next slide shows the click adds no orders", size=12.5, color=MUTED)
+    text(s, tx, 4.4, tw, 0.3, "What it means for a program", size=14, color=NAVY, bold=True)
+    for j, item in enumerate(("Pay on the stage the click arrived at", "Lock credit once a cart exists",
+                              "Report the funnel stage per publisher")):
+        y = 4.85 + j * 0.46
+        dot(s, tx + 0.02, y + 0.07, P_ORANGE, 0.14)
+        text(s, tx + 0.3, y, tw - 0.3, 0.3, item, size=14, color=INK)
 
 
 def slide_method(prs, d):
@@ -615,7 +784,7 @@ def slide_incrementality(prs, d):
     max_incr = 100 * (1 - 1 / num(su["ratio_hi95"]))
     s = content_slide(prs, 7, "Attribution hijacking · is the click incremental?",
                       "A click fired at the cart adds no orders", (
-        "The obvious objection to slide 6: shoppers in the cart convert at a high rate anyway, so of course these "
+        "The obvious objection to slides 8 and 9: shoppers in the cart convert at a high rate anyway, so of course these "
         "clicks convert. That is the point, and it can be tested. Take every US Walmart shopper at the moment they "
         "first view the cart, and separately the checkout. The stage is fixed before any click, and shoppers an "
         "affiliate brought to the cart are left out. Then compare those who got an affiliate click afterwards with "
@@ -728,7 +897,7 @@ def slide_recommendations(prs, d):
     cols = [
         ("Grow the program", S_MARK, [
             ("Recruit review and HSA/FSA partners",
-             "Mattress Clarity, buyersguide.org and Truemed send rivals traffic; none seen at Saatva"),
+             "Shoppers compare ~2 brands (slide 5); rivals get Mattress Clarity, buyersguide.org, Truemed"),
             ("Give each publisher its own coupon code",
              "One code is shared today, so a sale can't be traced to its partner"),
             ("Tier commissions by the value of the click",
@@ -738,7 +907,7 @@ def slide_recommendations(prs, d):
             ("Reconcile clicks with saatva.com landings",
              "A click that never lands is proof, with no threshold to tune"),
             ("No overwrite once a cart exists",
-             "Cart-stage clicks add no orders (slide 7); plus extension stand-down, PPC policy"),
+             "Cart-stage clicks add no orders (slide 10); plus extension stand-down, PPC policy"),
             ("Monitor every publisher (built: next slide)",
              "Hold payouts on flagged orders; validate on reversals"),
         ]),
@@ -914,8 +1083,8 @@ def main():
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(W), Inches(H)
     set_theme(prs)
-    for build in (slide_title, slide_answer, slide_share, slide_volume, slide_method, slide_hijack, slide_incrementality,
-                  slide_cases,
+    for build in (slide_title, slide_answer, slide_share, slide_volume, slide_journey, slide_method, slide_panel,
+                  slide_hijack, slide_stage, slide_incrementality, slide_cases,
                   slide_recommendations, slide_monitor, appendix_results, appendix_data, appendix_indicators):
         build(prs, d)
     register_notes_master(prs)

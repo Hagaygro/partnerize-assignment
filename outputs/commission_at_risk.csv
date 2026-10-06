@@ -1,4 +1,4 @@
 brand,scope,orders_per_day_lo,orders_per_day_hi,commission_per_day_lo,commission_per_day_hi,commission_per_year_lo_musd,commission_per_year_hi_musd
+Saatva,Per 10% of affiliate orders hijacked,8.0,33.0,217.0,2872.0,0.08,1.05
 Walmart,All strong indicators,63224.0,95863.0,63224.0,479317.0,23.1,175.0
 Walmart,Injected at cart/checkout (tested in this step),60988.0,60988.0,60988.0,304940.0,22.3,111.3
-Saatva,Per 10% of affiliate orders hijacked,8.0,33.0,217.0,2872.0,0.08,1.05

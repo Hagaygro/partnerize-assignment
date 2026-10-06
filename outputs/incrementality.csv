@@ -1,5 +1,5 @@
 stage,grp,users,orders,order_rate_pct
-checkout,Affiliate click fired after this point,18,12,66.7
-checkout,No affiliate click,759,575,75.8
 cart,Affiliate click fired after this point,38,13,34.2
 cart,No affiliate click,1280,406,31.7
+checkout,Affiliate click fired after this point,18,12,66.7
+checkout,No affiliate click,759,575,75.8

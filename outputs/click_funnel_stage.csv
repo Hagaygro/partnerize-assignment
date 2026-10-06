@@ -1,0 +1,12 @@
+brand,stage_at_click,clicks,pct_clicks,orders,pct_orders,conversion_pct
+DreamCloud,1 Click starts the visit,2,100.0,0,,0.0
+Helix,1 Click starts the visit,2,100.0,0,,0.0
+Nectar,1 Click starts the visit,3,75.0,0,,0.0
+Nectar,3 Already on a product page,1,25.0,0,,0.0
+Saatva,0 Never reached the site,1,16.7,0,,0.0
+Saatva,1 Click starts the visit,5,83.3,0,,0.0
+Walmart,1 Click starts the visit,5044,78.2,34,30.6,0.67
+Walmart,2 Already browsing the site,267,4.1,15,13.5,5.62
+Walmart,3 Already on a product page,941,14.6,15,13.5,1.59
+Walmart,4 Already in cart,107,1.7,19,17.1,17.76
+Walmart,5 Already at checkout,90,1.4,28,25.2,31.11

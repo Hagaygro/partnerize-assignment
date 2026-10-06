@@ -202,6 +202,22 @@ button:focus-visible, tr:focus-visible, [tabindex]:focus-visible { outline: 2px 
     <section class="card" id="drill-list"></section>
   </div>
 
+  <div class="band"><h3>Where the click enters the funnel</h3></div>
+  <section class="card">
+    <div class="incr">
+      <div>
+        <div class="metric-title" id="stage-title">Stage reached when the click fired</div>
+        <div class="legend"><span><i style="background:var(--s2)"></i>Share of clicks</span><span><i style="background:var(--s1)"></i>Share of orders</span></div>
+        <div class="bars" id="stage-bars"></div>
+      </div>
+      <div class="result">
+        <div class="metric-title">After the cart</div>
+        <div class="metric-header"><p class="metric-value" id="stage-val"></p></div>
+        <div class="metric-date" id="stage-sub"></div>
+      </div>
+    </div>
+  </section>
+
   <div class="band"><h3>Is a click at the cart incremental?</h3></div>
   <section class="card">
     <div class="incr">
@@ -414,7 +430,31 @@ function renderSignals(m) {
   }
 }
 
+const STAGES = ["Never reached the site", "Click starts the visit", "Already browsing", "On a product page", "In the cart", "At checkout"];
+function renderStages(m) {
+  const n = STAGES.map(() => ({ clicks: 0, orders: 0 }));
+  for (const c of m.clicks) { n[c.st].clicks++; n[c.st].orders += c.cv; }
+  const tc = m.tot.clicks, to = m.tot.orders;
+  const box = $("#stage-bars"); box.replaceChildren();
+  const max = Math.max(...n.map((x) => Math.max(x.clicks / tc, to ? x.orders / to : 0)), 0.01);
+  n.forEach((x, i) => {
+    if (!x.clicks && i === 0) return;
+    const cs = x.clicks / tc, os = to ? x.orders / to : NaN;
+    const pair = el("div", {},
+      el("div", { class: "track" }, el("div", { class: "stack", style: `width:${(cs / max) * 80}%` }, el("span", { style: "flex:1;background:var(--s2)" })), el("span", { class: "val" }, fmtPct(cs))),
+      el("div", { class: "track", style: "margin-top:3px" }, el("div", { class: "stack", style: `width:${isFinite(os) ? (os / max) * 80 : 0}%` }, el("span", { style: "flex:1;background:var(--s1)" })), el("span", { class: "val" }, isFinite(os) ? fmtPct(os) : "–")));
+    bindHover(pair, () => [el("div", { class: "hh" }, STAGES[i]),
+      hoverRow("var(--s2)", fmtInt(x.clicks), " clicks"), hoverRow("var(--s1)", fmtInt(x.orders), " orders"),
+      el("div", { style: "margin-top:4px" }, `Conversion ${fmtPct(x.orders / x.clicks, 1)}`)]);
+    box.append(el("div", { class: "name" }, STAGES[i]), pair);
+  });
+  const late = { clicks: n[4].clicks + n[5].clicks, orders: n[4].orders + n[5].orders };
+  $("#stage-val").replaceChildren(el("b", {}, fmtPct(late.clicks / tc)), " of clicks", to ? ` · ${fmtPct(late.orders / to)} of orders` : "");
+  $("#stage-sub").textContent = late.clicks ? `${fmtPct(late.orders / late.clicks, 0)} conversion` : "No clicks after the cart";
+}
+
 function renderIncrementality() {
+  $("#stage-title").append(" ", info("The furthest point the shopper had reached on the brand's site in the 30 min before the click, counting only browsing since any earlier affiliate click.\n\nA genuine referral starts the visit. A click that arrives after the cart closes a sale already under way."));
   $("#incr-title").append(" ", info("Walmart, US shoppers. Each shopper's stage is fixed at their first cart or checkout view, before any click. Shoppers an affiliate brought to the cart are left out.\n\nCompared: shoppers who then got an affiliate click vs shoppers who did not."));
   const box = $("#incr-bars"); box.replaceChildren();
   for (const stage of ["cart", "checkout"]) {
@@ -565,6 +605,7 @@ function render() {
   renderSignals(m);
   renderTable(m);
   renderDrill(m);
+  renderStages(m);
 }
 
 // ---------- wiring ----------

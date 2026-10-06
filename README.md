@@ -63,6 +63,37 @@ lean the same way: 43% and 37% of visits come from paid search.
   Saatva's affiliate orders that is hijacked costs about **$80k–1.05M a year** ($860 average order,
   3–10% commission, 84–334 affiliate orders/day).
 
+## Know the panel (`13_panel.sql`)
+
+Every number above is a panel number, so the panel is checked like any other data source.
+
+* **Size and concentration.** 784K user ids in the day, 88.5% US. Activity is concentrated: the top 10%
+  of users produce 57% of events (top 1%: 19.5%); 135 ids log more than 5,000 events in the day.
+* **Coverage is selective.** The panel is not a uniform sample of browsing. PayPal (20.6K users), MSN,
+  Walmart (13.9K) and the NYT are large, while Amazon (12), Google (7), Facebook (3), YouTube (2) and Target (0)
+  are effectively not covered. So shares of "all browsing" are meaningless, only within-site measures are
+  valid, and each audience needs its own calibration (why the mattress brands are not scaled on Walmart).
+* **What that does to the indicators.** Search engines are not recorded, so "brand search before the click"
+  can never fire, and a click with no visible referrer may come from an uncovered site; it stays a weak signal.
+* **Recruitment bias.** Panels are often recruited through browser extensions, so coupon-extension users may
+  be over-represented. They are 13% of Walmart visitors and carry more flagged clicks, but the result does
+  not depend on them. The share of Walmart's affiliate orders from flagged clicks is 79% as observed and 78% / 77%
+  with those users weighted at ½ / ¼. It is still 76% with them dropped, and 50–85% in every activity tier.
+
+## Funnels (`14_funnels.sql`)
+
+A brand's own analytics stop at its own domain. The panel follows a person across sites:
+
+* **The mattress category funnel** (US panel, ~20 brands): 246 mattress shoppers, 229 on a brand site, 69 on a
+  product page, 18 in a cart, 10 at checkout, 2 orders. That is a long, considered journey, which is why a same-day
+  window finds almost no orders.
+* **Cross-shopping.** 44–57% of each brand's visitors also open another mattress brand (≈2 brands each).
+  Saatva's visitors also look at Mattress Firm, Nectar and DreamCloud, so comparison content is where its
+  affiliate program wins or loses the shopper.
+* **Where the affiliate click enters the funnel** (Walmart): 78% of clicks start the visit but carry 31% of
+  the credited orders (0.7% conversion). Clicks that fire after the cart or at checkout are **3% of clicks and
+  42% of orders** (18–31% conversion), and `11_incrementality.sql` shows they add no orders.
+
 ## Publisher Risk Monitor (dashboard)
 
 `dashboard/publisher_risk_monitor.html` is a single self-contained file: open it in any browser, with no server
@@ -81,6 +112,7 @@ or network needed. It turns the hijacking indicators into a weekly working tool 
 * **The incrementality test** (`11_incrementality.sql`) is shown alongside.
 * The look follows the "Platform Elements" dashboard spec (geekblue, antd v4): section bands, metric cards,
   underline tabs, pill controls, `.pe-table` tables. Definitions sit behind ⓘ tooltips, not as fine print.
+* **Where the click enters the funnel**: share of clicks and orders by the stage reached when the click fired.
 * The view is kept in the URL hash (`#brand=Walmart&lookback=600&pub=impact%3A150372`), so a link opens the
   same view.
 
@@ -206,6 +238,8 @@ sql/                       # the analysis, run in order (each file documents its
   10_sensitivity.sql       # hijack indicators under stricter look-back windows
   11_incrementality.sql    # do clicks fired at the cart add orders? + commission at risk
   12_seasonality.sql       # scale factors moved from August to 1 May with Google Trends
+  13_panel.sql             # panel profile, site coverage, recruitment-bias checks
+  14_funnels.sql           # category funnel, cross-shopping, funnel stage of each affiliate click
 scripts/
   download_data.py         # parallel, resumable download of the archive
   fetch_google_trends.py   # daily US search interest per brand -> external/ (run once)

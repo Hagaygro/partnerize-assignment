@@ -62,8 +62,9 @@ def main():
                c.secs_since_checkout, c.secs_since_brand_page,
                c.brand_search_60s, c.coupon_ext_60s, c.multi_brand_burst, c.no_referrer,
                c.prev_host, c.coupon IS NOT NULL                         AS has_coupon,
-               c.landing_url
+               c.landing_url, s.stage_at_click
         FROM us_clicks c
+        JOIN click_stage s USING (brand, click_key)
         ORDER BY c.brand, c.click_time, c.click_key
     """)
 
@@ -143,6 +144,7 @@ def main():
             "ls": None if c["no_landing"] else landing_section(c["landing_url"]),
             "j": steps.get((c["brand"], c["click_key"]), []),
             "a": after.get((c["brand"], c["click_key"]), []),
+            "st": int(c["stage_at_click"][0]),
         })
 
     comp = {r["brand"]: r for r in csv_rows("competitor_summary")}

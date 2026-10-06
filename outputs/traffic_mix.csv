@@ -1,26 +1,26 @@
 brand,entry_source,visits,pct_of_brand_visits
-DreamCloud,Untagged (organic / direct / referral),12,44.4
-DreamCloud,Paid search,10,37.0
 DreamCloud,Affiliate,2,7.4
-DreamCloud,Other tagged,2,7.4
 DreamCloud,Email / SMS,1,3.7
-Helix,Untagged (organic / direct / referral),15,78.9
+DreamCloud,Other tagged,2,7.4
+DreamCloud,Paid search,10,37.0
+DreamCloud,Untagged (organic / direct / referral),12,44.4
 Helix,Affiliate,2,10.5
 Helix,Email / SMS,1,5.3
 Helix,Paid search,1,5.3
-Nectar,Untagged (organic / direct / referral),24,47.1
-Nectar,Paid search,22,43.1
+Helix,Untagged (organic / direct / referral),15,78.9
 Nectar,Affiliate,2,3.9
-Nectar,Social (paid/organic),2,3.9
 Nectar,Other tagged,1,2.0
-Saatva,Untagged (organic / direct / referral),14,56.0
+Nectar,Paid search,22,43.1
+Nectar,Social (paid/organic),2,3.9
+Nectar,Untagged (organic / direct / referral),24,47.1
 Saatva,Affiliate,4,16.0
-Saatva,Paid search,4,16.0
 Saatva,Display / TV,2,8.0
 Saatva,Email / SMS,1,4.0
-Walmart,Untagged (organic / direct / referral),13046,79.5
-Walmart,Paid search,2194,13.4
+Saatva,Paid search,4,16.0
+Saatva,Untagged (organic / direct / referral),14,56.0
 Walmart,Affiliate,1052,6.4
-Walmart,Other tagged,95,0.6
-Walmart,Social (paid/organic),13,0.1
 Walmart,Display / TV,1,0.0
+Walmart,Other tagged,95,0.6
+Walmart,Paid search,2194,13.4
+Walmart,Social (paid/organic),13,0.1
+Walmart,Untagged (organic / direct / referral),13046,79.5

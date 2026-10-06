@@ -1,0 +1,5 @@
+coupon_user_weight,pct_orders_flagged
+0 (dropped),75.7
+0.25 (at 4x),76.9
+0.5 (panel holds them at 2x),77.9
+1 (as observed),79.3
