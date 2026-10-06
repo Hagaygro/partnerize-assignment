@@ -19,8 +19,9 @@
 -- brands, F_retail is the conservative low end. The population ratio (US internet
 -- users ÷ panel US users) is a cross-check.
 --
--- Caveats: Similarweb's latest public month is August (the Labor Day mattress sale
--- season), so F_mattress likely overstates an ordinary May day somewhat. The
+-- Caveats: Similarweb's latest public month is August, while the panel day is 1 May.
+-- 12_seasonality.sql moves the factors to 1 May with Google Trends: for the mattress
+-- brands, August understates that day (~2x), so these factors are a low estimate. The
 -- panel-user count includes mirror IDs.
 -- =============================================================================
 

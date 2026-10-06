@@ -140,8 +140,16 @@ with public traffic figures: its true daily US visits ÷ the panel's US visits t
     brand at a time, F_mattress reproduces each brand's Similarweb traffic at 0.89–1.27×.
 * **Alternatives** are reported as the conservative estimate: F_retail for the mattress brands,
   and the population ratio for Walmart (324M US internet users ÷ 694k US panel users = 467).
-* **Caveat.** Similarweb's latest public month is August, the Labor Day mattress sale season.
-  F_mattress may therefore overstate an ordinary May day somewhat.
+* **Seasonality (`12_seasonality.sql`).** Similarweb's latest public month is August; the panel day is
+  1 May. Same-period Similarweb figures are paid, so Google Trends is the free proxy for the seasonal shape
+  (daily US search interest, fetched by `scripts/fetch_google_trends.py` into `external/`). Search interest in
+  the week around 1 May is **1.5–2.8× the August average** for the mattress brands (spring and Memorial Day
+  sales), and 0.96× for Walmart. Moved to 1 May, F_mattress doubles (2,784 → 5,571): Saatva **~33K**
+  affiliate clicks/day instead of 16.7K, Nectar 22K, Helix and DreamCloud 11K. Walmart drops 4%. So the
+  August calibration is, if anything, a **low** estimate for that day. The headline keeps the August
+  factor, because a search swing can exaggerate a traffic swing, and the proxy could not be checked against
+  Similarweb's monthly series. The comparison between the mattress brands is unaffected: they share one
+  factor, and the affiliate *share* of visits needs no scaling at all.
 * **Intervals.** The 95% intervals cover only the panel's Poisson sampling error (Byar's
   approximation), not the error in F. With 2–6 clicks per mattress brand, the intervals
   overlap, so **one panel day cannot rank the mattress brands by click volume**. The affiliate
@@ -197,11 +205,14 @@ sql/                       # the analysis, run in order (each file documents its
   09_summary.sql           # result tables
   10_sensitivity.sql       # hijack indicators under stricter look-back windows
   11_incrementality.sql    # do clicks fired at the cart add orders? + commission at risk
+  12_seasonality.sql       # scale factors moved from August to 1 May with Google Trends
 scripts/
   download_data.py         # parallel, resumable download of the archive
+  fetch_google_trends.py   # daily US search interest per brand -> external/ (run once)
   extract_data.py          # extracts the Parquet files, verifies CRCs
   run_pipeline.py          # runs sql/ in order with row-count checks, exports outputs/
 outputs/                   # aggregated result tables (CSV)
+external/                  # external series used by the pipeline (Google Trends)
 dashboard/
   build_dashboard.py       # builds the Publisher Risk Monitor from the pipeline tables
   template.html            # the page; data is injected at build time
@@ -236,6 +247,8 @@ it is too large for git.
   [nectarsleep.com](https://www.similarweb.com/website/nectarsleep.com/),
   [dreamcloudsleep.com](https://www.similarweb.com/website/dreamcloudsleep.com/),
   [helixsleep.com](https://www.similarweb.com/website/helixsleep.com/)
+* Google Trends, US daily search interest 1 Apr – 30 Sep 2026 (terms: saatva, nectar mattress, helix mattress,
+  dreamcloud mattress, walmart), fetched 2026-10-06 via pytrends
 * US internet users: [DataReportal, Digital 2026](https://datareportal.com/reports/digital-2026-six-billion-internet-users)
 * Average order value, retrieved 2026-10-06: [walmart.com](https://gripsintelligence.com/insights/retailers/walmart.com)
   ($100–125, Mar 2026) and [saatva.com](https://gripsintelligence.com/insights/retailers/saatva.com) ($850–875, Jun 2026), Grips Intelligence
@@ -249,8 +262,9 @@ it is too large for git.
 * **One day of panel data.** Mattress brands have 2–6 affiliate clicks and no completed orders.
   Next: run the same pipeline on 30–90 days, and on Saatva's own Partnerize click and order
   logs, which cover every click rather than a sample.
-* **Scaling** depends on public traffic estimates for a different month. Next: calibrate on
-  same-period figures (paid Similarweb / Partnerize benchmarks), and break the panel down by
+* **Scaling** depends on public traffic estimates for a different month. The Google Trends adjustment
+  (`12_seasonality.sql`) suggests the August figures understate 1 May by ~2× for the mattress brands. Next:
+  confirm with same-period figures (paid Similarweb / Partnerize benchmarks), and break the panel down by
   device.
 * **Conversion window.** Mattresses are a considered purchase: the same-day window misses orders
   placed days after the click, while affiliate cookies last 30 days. Next: multi-day user journeys.

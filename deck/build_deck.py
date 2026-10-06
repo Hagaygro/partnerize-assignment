@@ -509,7 +509,9 @@ def slide_method(prs, d):
         "Scaling: a factor calibrated on walmart.com recovers only 35–50% of the mattress sites' Similarweb "
         "traffic, because the panel under-covers that audience. The mattress brands therefore use a factor "
         "calibrated on the mattress sites themselves, which reproduces each brand within 0.89–1.27×. Caveat: "
-        "Similarweb's latest public month is August, the Labor Day sale season."))
+        "Similarweb's latest public month is August, while the panel day is 1 May. Google Trends puts mattress "
+        "search interest around 1 May at 1.5–2.8× August, so moved to that day the mattress estimates roughly "
+        "double (Saatva about 33K clicks a day). The headline keeps the August factor as the lower estimate."))
     dq, sc, v = d["dq"], d["scaling"], d["valid"]
     clicks = sum(num(r["panel_affiliate_clicks"]) for r in d["comp"].values())
     steps = [(f"{num(dq['rows']) / 1e6:.1f}M", f"panel events from {num(dq['users']) / 1e3:.0f}K users, one day"),
@@ -814,8 +816,10 @@ def appendix_results(prs, d):
         ("² No mattress order, registration or financing application followed an affiliate click that day; the "
          "range applies a 0.5–2% category conversion rate.", {"after": 3}),
         ("Conservative: the Walmart-calibrated factor for the mattress brands, the population ratio for Walmart. "
-         "95% CI: Poisson sampling error of the panel count only.", {"after": 10}),
-        "Sources: Similarweb website pages (Aug 2026); DataReportal, Digital 2026 (324M US internet users); "
+         "95% CI: Poisson sampling error of the panel count only.", {"after": 3}),
+        ("Seasonality: calibrated on August traffic. Google Trends puts mattress search interest around 1 May at "
+         "1.5–2.8× August; moved to that day, mattress estimates roughly double (Saatva ~33K a day).", {"after": 10}),
+        "Sources: Similarweb website pages (Aug 2026); Google Trends (US, daily); DataReportal, Digital 2026 (324M US internet users); "
         "Grips Intelligence retailer pages (mattress conversion rates)."], size=11.5, color=MUTED, spacing=1.1)
 
 
