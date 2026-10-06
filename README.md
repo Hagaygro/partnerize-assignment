@@ -79,6 +79,8 @@ or network needed. It turns the hijacking indicators into a weekly working tool 
   second as the order. Saatva's stuffed click shows `tatrck.com` firing the Partnerize click while the user
   goes on to sleepnumber.com.
 * **The incrementality test** (`11_incrementality.sql`) is shown alongside.
+* The look follows the "Platform Elements" dashboard spec (geekblue, antd v4): section bands, metric cards,
+  underline tabs, pill controls, `.pe-table` tables. Definitions sit behind ⓘ tooltips, not as fine print.
 * The view is kept in the URL hash (`#brand=Walmart&lookback=600&pub=impact%3A150372`), so a link opens the
   same view.
 

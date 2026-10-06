@@ -5,258 +5,220 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Publisher Risk Monitor</title>
 <style>
+/* Platform Elements look (geekblue / antd v4), as specified by the ui-dashboard skill
+   in analytics-dashboards (ui/look/theme.py + components.py). Light theme only. */
 :root {
   color-scheme: light;
-  --bg: #f4f6f9;
-  --surface: #ffffff;
-  --surface-2: #f3f6f9;
-  --ink: #142233;
-  --ink-2: #4d5b6b;
-  --ink-3: #6f7c8a;
-  --line: #e1e6ec;
-  --navy: #0b2a4a;
-  --accent: #c9620e;
-  --clean: #2f7fd8;
-  --flag: #e0701f;
-  --flag-tint: #fff1e5;
-  --hold: #d03b3b;
-  --review: #b77800;
-  --ok: #0a8a0a;
-  --chip: #eef2f6;
-  --focus: #2f7fd8;
-  --m-clicks: #9fb0c3;
-  --m-orders: #2c4a6b;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #111418;
-    --surface: #1a1d21;
-    --surface-2: #22262b;
-    --ink: #eef1f4;
-    --ink-2: #b9c1ca;
-    --ink-3: #8f99a4;
-    --line: #2e333a;
-    --navy: #e6edf5;
-    --accent: #f39a52;
-    --clean: #3f8fe8;
-    --flag: #e0701f;
-    --flag-tint: #3a2616;
-    --hold: #e66767;
-    --review: #fab219;
-    --ok: #3cc43c;
-    --chip: #2a2f35;
-    --m-clicks: #5b6e83;
-    --m-orders: #c3d0de;
-  }
-}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #111418; --surface: #1a1d21; --surface-2: #22262b; --ink: #eef1f4; --ink-2: #b9c1ca;
-  --ink-3: #8f99a4; --line: #2e333a; --navy: #e6edf5; --accent: #f39a52; --clean: #3f8fe8;
-  --flag: #e0701f; --flag-tint: #3a2616; --hold: #e66767; --review: #fab219; --ok: #3cc43c; --chip: #2a2f35;
-  --m-clicks: #5b6e83; --m-orders: #c3d0de;
+  --gb-1: #f0f5ff; --gb-1-5: #e8eefa; --gb-2: #d6e4ff; --gb-3: #adc6ff; --gb-5: #597ef7; --gb-6: #2f54eb; --gb-7: #1d39c4;
+  --grey-3: #f5f5f5; --grey-4: #f0f0f0; --grey-5: #d9d9d9; --grey-7: #8c8c8c; --grey-8: #595959; --grey-10: #262626;
+  --card-line: #e8e8e8;
+  /* CHART_PALETTE[0], [1]: the subject series (flagged / click fired) and its baseline */
+  --s1: #b37feb;      /* purple, one step deeper than palette purple-3 so thin bars stay visible */
+  --s2: #ffd666;      /* gold, one step deeper than palette gold-3 */
+  --font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --display: 'NHaasGroteskDSPro-75Bd', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 * { box-sizing: border-box; }
-body {
-  margin: 0; background: var(--bg); color: var(--ink);
-  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-variant-numeric: tabular-nums;
-}
-.wrap { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
-header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
-.kicker { color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
-h1 { margin: 4px 0 2px; font: 600 28px/1.15 Georgia, "Times New Roman", serif; color: var(--navy); }
-.sub { color: var(--ink-2); margin: 0; max-width: 760px; }
-h2 { font-size: 15px; margin: 0 0 2px; color: var(--ink); }
-.note { color: var(--ink-3); font-size: 12px; margin: 0; }
+html, body { background: #fff; }
+body { margin: 0; color: var(--grey-10); font: 12px/1.5 var(--font); font-variant-numeric: tabular-nums; }
+.page { max-width: 1320px; margin: 0 auto; padding: 0 32px 40px; }
 
-.controls { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-end; margin: 20px 0 16px; }
-.ctl label, .ctl .lbl { display: block; font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
-.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 2px; flex-wrap: wrap; }
-.seg button { border: 0; background: transparent; color: var(--ink-2); font: inherit; padding: 5px 11px; border-radius: 6px; cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--navy); color: var(--surface); font-weight: 600; }
-.seg button:focus-visible, button:focus-visible, input:focus-visible, tr:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
-input[type=number], input[type=search] {
-  font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
-  border-radius: 6px; padding: 5px 8px; width: 96px;
-}
-input[type=search] { width: 220px; }
-.theme-btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
+/* Page header: compact title + right-aligned pill */
+.topbar { height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.topbar h1 { margin: 0; font: 700 20px/1.2 var(--display); color: var(--grey-10); }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 14px; border: 1px solid var(--grey-5); border-radius: 9999px; color: var(--grey-10); font-size: 12px; background: #fff; white-space: nowrap; }
 
-.tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
-.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
-.tile .k { font-size: 12px; color: var(--ink-3); font-weight: 600; }
-.tile .v { font-size: 28px; font-weight: 700; color: var(--navy); margin: 4px 0 2px; white-space: nowrap; }
-.tile .c { font-size: 12px; color: var(--ink-2); }
-.tile.alert { background: var(--flag-tint); border-color: transparent; }
+/* Brand view-tabs: underline tabs, one row, scroll instead of wrap */
+.tabs { display: flex; gap: 28px; border-bottom: 1px solid var(--grey-4); overflow-x: auto; scrollbar-width: none; }
+.tabs button { background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 2px 2px 8px; font: 500 15px var(--font); color: var(--grey-7); cursor: pointer; white-space: nowrap; }
+.tabs button:hover { color: var(--gb-6); }
+.tabs button[aria-selected="true"] { color: var(--gb-6); border-bottom-color: var(--gb-6); font-weight: 600; }
 
-.grid2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 12px; margin-top: 12px; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
-.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
-.legend { display: flex; gap: 14px; font-size: 12px; color: var(--ink-2); flex-wrap: wrap; }
-.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+/* Control row */
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding: 12px 0 2px; }
+.ctl { display: inline-flex; align-items: center; gap: 8px; color: var(--grey-8); font-size: 12px; }
+.zoom { display: inline-flex; border: 1px solid var(--grey-5); border-radius: 20px; overflow: hidden; background: #fff; }
+.zoom button { border: 0; background: #fff; color: var(--grey-8); font: 400 12px var(--font); padding: 4px 14px; cursor: pointer; }
+.zoom button[aria-pressed="true"] { background: var(--gb-5); color: #fff; }
+.zoom button:not([aria-pressed="true"]):hover { color: var(--gb-6); }
+input[type=number], input[type=search] { font: 12px var(--font); color: var(--grey-10); border: 1px solid var(--grey-5); border-radius: 4px; padding: 4px 8px; height: 28px; background: #fff; }
+input[type=number] { width: 76px; }
+input[type=search] { width: 220px; border-radius: 20px; padding: 4px 12px; }
+input:hover { border-color: var(--gb-5); }
+input:focus { outline: none; border-color: var(--gb-6); box-shadow: 0 0 0 2px rgba(47, 84, 235, .12); }
+button:focus-visible, tr:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--gb-5); outline-offset: 1px; }
 
-.bars { display: grid; grid-template-columns: minmax(90px, 160px) 1fr; gap: 6px 10px; align-items: center; }
-.bars .name { font-size: 12.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bars .name small { color: var(--ink-3); }
-#incr-bars .name { white-space: normal; line-height: 1.25; }
-.track { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.stack { display: flex; height: 16px; gap: 2px; min-width: 2px; }
-.stack span { display: block; height: 100%; }
-.stack span:first-child { border-radius: 4px 0 0 4px; }
-.stack span:last-child { border-radius: 0 4px 4px 0; }
-.stack span:only-child { border-radius: 4px; }
-.val { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
-.hit { cursor: default; }
-.hit:hover .stack, .hit:focus .stack { filter: brightness(1.08); outline: 1px solid var(--ink-3); outline-offset: 1px; border-radius: 4px; }
+/* Section band */
+.band { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--gb-1); border: 1px solid var(--gb-2); border-radius: 8px; padding: 8px 14px; margin: 14px 0 10px; min-height: 44px; flex-wrap: wrap; }
+.band h3 { margin: 0; padding-left: 4px; font: 500 18px/1.2 var(--font); color: var(--grey-10); display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 
-.sig { display: grid; grid-template-columns: minmax(130px, 190px) 1fr; gap: 3px 10px; align-items: center; }
-.sig .name { font-size: 12.5px; }
-.sig .tier { font-size: 10.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; margin-left: 4px; }
-.pair { display: grid; gap: 3px; padding: 4px 0; }
-.pair .bar { height: 10px; border-radius: 0 4px 4px 0; min-width: 2px; }
-.pair .row { display: flex; align-items: center; gap: 6px; }
+/* Metric card */
+.cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.card { background: #fff; border: 1px solid var(--card-line); border-radius: 10px; padding: 10px 14px 12px; min-width: 0; }
+.metric-title { margin: 0 0 1px; font-size: 16px; font-weight: 700; color: var(--grey-10); display: flex; align-items: center; gap: 6px; }
+.metric-header { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.metric-value { margin: 0; font-size: 16px; font-weight: 400; color: var(--grey-8); }
+.metric-date { font-size: 12px; color: var(--grey-7); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-.incr { display: grid; grid-template-columns: 1fr 220px; gap: 16px; align-items: center; }
-.big { font-size: 34px; font-weight: 700; color: var(--navy); line-height: 1.1; }
+/* Info icon + tooltip (definitions live here, not on the page) */
+.info { position: relative; display: inline-flex; color: var(--grey-7); cursor: help; font-weight: 400; }
+.info:hover, .info:focus { color: var(--gb-6); }
+.info svg { width: 14px; height: 14px; display: block; }
+.info .tip { display: none; position: absolute; top: calc(100% + 6px); left: -8px; z-index: 20; background: #fff; color: var(--grey-8); padding: 10px 14px; border: 1px solid var(--grey-4); border-radius: 12px; font: 400 12px/1.5 var(--font); text-align: left; white-space: pre-line; min-width: 260px; max-width: 340px; box-shadow: 0 6px 16px rgba(0,0,0,.08), 0 3px 6px -4px rgba(0,0,0,.12); }
+.info.right .tip { left: auto; right: -8px; }
+.info:hover .tip, .info:focus .tip { display: block; }
 
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); font-weight: 600; padding: 8px; border-bottom: 1px solid var(--line); cursor: pointer; white-space: nowrap; user-select: none; }
-th.num, td.num { text-align: right; }
-th[aria-sort="descending"]::after { content: " ↓"; }
-th[aria-sort="ascending"]::after { content: " ↑"; }
-td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-tbody tr { cursor: pointer; }
-tbody tr:hover { background: var(--surface-2); }
-tbody tr.sel { background: var(--flag-tint); }
-.table-wrap { overflow: auto; max-height: 460px; border-bottom: 1px solid var(--line); }
-thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
-.status { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 12px; white-space: nowrap; }
-.status svg { flex: none; }
-.s-hold { color: var(--hold); } .s-review { color: var(--review); } .s-ok { color: var(--ok); } .s-low { color: var(--ink-3); font-weight: 500; }
-.mini { display: inline-block; width: 56px; height: 6px; background: var(--chip); border-radius: 3px; vertical-align: middle; margin-right: 6px; overflow: hidden; }
-.mini b { display: block; height: 100%; background: var(--flag); }
+/* Legend + bar charts (HTML marks) */
+.legend { display: flex; gap: 14px; color: var(--grey-8); font-size: 12px; margin: 6px 0 10px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.bars { display: grid; grid-template-columns: minmax(110px, 190px) 1fr; gap: 7px 12px; align-items: center; }
+.bars .name { font-size: 12px; color: var(--grey-10); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bars .name span { color: var(--grey-7); }
+.track { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.stack { display: flex; height: 14px; gap: 2px; min-width: 3px; }
+.stack span { height: 100%; }
+.stack span:first-child { border-radius: 3px 0 0 3px; }
+.stack span:last-child { border-radius: 0 3px 3px 0; }
+.stack span:only-child { border-radius: 3px; }
+.val { font-size: 12px; color: var(--grey-8); white-space: nowrap; }
+.hit { cursor: pointer; }
+.hit:hover .stack { filter: brightness(.95); }
+
+/* Incrementality */
+.incr { display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items: center; }
+.result { border-left: 1px solid var(--grey-4); padding-left: 20px; }
+.result b { color: var(--grey-10); font-weight: 700; }
+
+/* Data table (.pe-table) */
+.pe-table-card { background: #fff; border: 1px solid var(--card-line); border-radius: 10px; }
+.table-scroll { max-height: 470px; overflow: auto; border-radius: 10px; }
+.pe-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
+.pe-table th .info .tip { font-weight: 400; }
+.pe-table th { position: sticky; top: 0; z-index: 3; background: #fff; padding: 10px 12px; border-bottom: 2px solid #d5d5d5; font-weight: 600; color: #7c7c7c; text-align: center; white-space: normal; overflow-wrap: normal; vertical-align: bottom; cursor: pointer; user-select: none; }
+.pe-table th:first-child, .pe-table td:first-child { text-align: left; }
+.pe-table th[aria-sort="descending"]::after { content: " ▾"; }
+.pe-table th[aria-sort="ascending"]::after { content: " ▴"; }
+.pe-table td { padding: 8px 12px; border-bottom: 1px solid rgba(128,128,128,.15); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pe-table td.pe-l { text-align: left; }
+.pe-table tbody tr { cursor: pointer; }
+.pe-table tbody tr:hover td { background: var(--gb-1); }
+.pe-table tbody tr.sel td { background: var(--gb-1-5); }
+.pe-table tbody tr:last-child td { border-bottom: none; }
+.sig-table th { cursor: default; position: static; }
+.sig-table tbody tr { cursor: default; }
+.sig-table td:first-child { white-space: normal; }
+.sig-table td { overflow: visible; text-overflow: clip; }
+#tbl { min-width: 1000px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.mini { display: inline-block; width: 48px; height: 6px; background: var(--grey-4); border-radius: 3px; vertical-align: middle; margin-right: 8px; overflow: hidden; }
+.mini b { display: block; height: 100%; background: var(--s1); }
 
-.drill { margin-top: 12px; }
-.click { border-top: 1px solid var(--line); padding: 10px 0; }
-.click-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 12.5px; margin-bottom: 6px; }
-.tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11.5px; font-weight: 600; background: var(--chip); color: var(--ink-2); }
-.tag.f { background: var(--flag-tint); color: var(--accent); }
-.tag.o { background: var(--surface-2); color: var(--ok); border: 1px solid var(--line); }
+/* Status and label tags (antd tag look) */
+.tag { display: inline-block; padding: 0 8px; line-height: 20px; border-radius: 4px; border: 1px solid; font-size: 12px; white-space: nowrap; }
+.t-hold { color: #cf1322; background: #fff1f0; border-color: #ffa39e; }
+.t-review { color: #d46b08; background: #fff7e6; border-color: #ffd591; }
+.t-ok { color: #389e0d; background: #f6ffed; border-color: #b7eb8f; }
+.t-low { color: var(--grey-8); background: var(--grey-3); border-color: var(--grey-5); }
+.t-sig { color: var(--gb-7); background: var(--gb-1); border-color: var(--gb-3); }
+.t-flag { color: #531dab; background: #f9f0ff; border-color: #d3adf7; }
+.t-order { color: var(--grey-10); background: #fff; border-color: var(--grey-5); }
+
+/* Journeys */
+.click { border-top: 1px solid var(--grey-4); padding: 10px 0; }
+.click:first-child { border-top: 0; padding-top: 2px; }
+.click-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
 .journey { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.step { display: inline-flex; flex-direction: column; padding: 4px 8px; border-radius: 6px; background: var(--chip); font-size: 12px; max-width: 220px; }
-.step .h { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.step .s { color: var(--ink-3); font-size: 11px; }
-.step.brand { background: var(--surface); border: 1px solid var(--clean); }
-.step.cart { background: var(--flag-tint); border: 1px solid var(--flag); }
-.step.click-step { background: var(--navy); color: var(--surface); font-weight: 600; }
-.step.click-step .s { color: var(--surface); opacity: .8; }
-.arrow { color: var(--ink-3); font-size: 12px; }
-.empty { color: var(--ink-3); padding: 12px 0; }
+.step { display: inline-flex; flex-direction: column; padding: 4px 10px; border-radius: 6px; background: var(--grey-3); border: 1px solid var(--grey-3); max-width: 230px; }
+.step .h { font-size: 12px; color: var(--grey-10); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step .h b { font-weight: 600; }
+.step .s { font-size: 12px; color: var(--grey-7); }
+.step.brand { background: #fff; border-color: var(--gb-3); }
+.step.cart { background: #f9f0ff; border-color: var(--s1); }
+.step.click-step { background: var(--gb-6); border-color: var(--gb-6); }
+.step.click-step .h { color: #fff; font-weight: 600; }
+.step.click-step .s { color: var(--gb-2); }
+.step.order { background: #fff; border-color: var(--grey-10); }
+.arrow { color: var(--grey-7); }
+.empty { color: var(--grey-7); padding: 10px 0; font-size: 12px; }
+.more { margin-top: 6px; }
+.more button { border: 1px solid var(--grey-5); background: #fff; border-radius: 9999px; padding: 4px 14px; font: 12px var(--font); color: var(--grey-10); cursor: pointer; }
+.more button:hover { color: var(--gb-6); border-color: var(--gb-6); }
 
-.tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 4px 16px rgba(0,0,0,.12); border-radius: 8px; padding: 8px 10px; font-size: 12px; z-index: 10; display: none; max-width: 280px; }
-.tip b { font-size: 14px; }
-.tip .r { display: flex; align-items: center; gap: 6px; }
-.tip .r i { display: inline-block; width: 12px; height: 2px; }
-footer { margin-top: 20px; color: var(--ink-3); font-size: 12px; }
-footer p { margin: 4px 0; max-width: 900px; }
+/* Chart hover box */
+.hover { position: fixed; z-index: 30; pointer-events: none; display: none; background: #fff; border: 1px solid var(--grey-4); border-radius: 8px; box-shadow: 0 6px 16px rgba(0,0,0,.08); padding: 8px 12px; font-size: 12px; color: var(--grey-8); min-width: 160px; }
+.hover .hh { color: var(--grey-10); font-weight: 600; margin-bottom: 4px; }
+.hover .r { display: flex; align-items: center; gap: 8px; }
+.hover .r i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.hover .r b { color: var(--grey-10); }
 
-@media (max-width: 980px) {
-  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .grid2 { grid-template-columns: 1fr; }
-  .incr { grid-template-columns: 1fr; }
-}
-@media (max-width: 520px) {
-  .tiles { grid-template-columns: 1fr; }
-  h1 { font-size: 23px; }
-  .bars, .sig { grid-template-columns: 96px 1fr; }
+@media (max-width: 1100px) { .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } .grid2, .incr { grid-template-columns: 1fr; } .result { border-left: 0; padding-left: 0; } }
+@media (max-width: 640px) {
+  .page { padding: 0 16px 32px; }
+  .cards { grid-template-columns: 1fr 1fr; }
+  .tabs { gap: 16px; } .tabs button { font-size: 13px; }
+  .bars { grid-template-columns: 110px 1fr; }
+  input[type=search] { width: 100%; }
 }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div>
-      <div class="kicker">Partnerize · affiliate quality</div>
-      <h1>Publisher Risk Monitor</h1>
-      <p class="sub">Each affiliate click is checked for signs that the publisher took credit for a sale it did not drive.
-        US users of the browsing panel, <span id="date"></span>. Pick a brand and a look-back window; everything below recomputes.</p>
-    </div>
-    <button class="theme-btn" id="theme" type="button" aria-label="Toggle light or dark theme">◐ Theme</button>
-  </header>
-
-  <div class="controls">
-    <div class="ctl"><span class="lbl" id="lbl-brand">Brand</span><div class="seg" id="brand" role="group" aria-labelledby="lbl-brand"></div></div>
-    <div class="ctl"><span class="lbl" id="lbl-lb">Look-back for cart / on-site signals</span><div class="seg" id="lookback" role="group" aria-labelledby="lbl-lb"></div></div>
-    <div class="ctl"><label for="aov">Avg order ($)</label><input id="aov" type="number" min="1" step="1"></div>
-    <div class="ctl"><label for="comm">Commission (%)</label><input id="comm" type="number" min="0" max="100" step="0.5"></div>
+<div class="page">
+  <div class="topbar">
+    <h1>Publisher Risk Monitor</h1>
+    <span class="pill" id="period"></span>
   </div>
 
-  <section class="tiles" id="tiles" aria-label="Key figures"></section>
+  <nav class="tabs" id="brand" role="tablist" aria-label="Brand"></nav>
 
+  <div class="controls">
+    <div class="ctl"><span>Look-back</span><div class="zoom" id="lookback" role="group" aria-label="Look-back window"></div></div>
+    <label class="ctl" for="aov">Avg order $ <input id="aov" type="number" min="1" step="1"></label>
+    <label class="ctl" for="comm">Commission % <input id="comm" type="number" min="0" max="100" step="0.5"></label>
+  </div>
+
+  <div class="band"><h3>Overview</h3></div>
+  <section class="cards" id="cards"></section>
+
+  <div class="band"><h3>Publishers</h3><input type="search" id="q" placeholder="Search publisher or source" aria-label="Search publishers"></div>
   <div class="grid2">
     <section class="card">
-      <div class="card-head">
-        <div><h2 id="pub-chart-title">Where the affiliate orders go</h2><p class="note" id="pub-chart-note"></p></div>
-        <div class="legend"><span><i style="background:var(--clean)"></i>No strong signal</span><span><i style="background:var(--flag)"></i>Flagged</span></div>
-      </div>
+      <div class="metric-title" id="pub-title"></div>
+      <div class="legend"><span><i style="background:var(--s1)"></i>Flagged</span><span><i style="background:var(--s2)"></i>No strong signal</span></div>
       <div class="bars" id="pub-bars"></div>
     </section>
     <section class="card">
-      <div class="card-head">
-        <div><h2>What the flags are</h2><p class="note">Each click counts once, under its first-ranked indicator.</p></div>
-        <div class="legend"><span><i style="background:var(--m-clicks)"></i>Share of clicks</span><span><i style="background:var(--m-orders)"></i>Share of orders</span></div>
-      </div>
-      <div class="sig" id="sig"></div>
+      <div class="metric-title" id="sig-title">Signals</div>
+      <table class="pe-table sig-table" style="margin-top:6px"><colgroup><col><col style="width:20%"><col style="width:20%"><col style="width:18%"></colgroup>
+        <thead><tr><th>Signal</th><th>Clicks</th><th>Orders</th><th>Conv.</th></tr></thead><tbody id="sig"></tbody></table>
     </section>
   </div>
+  <div class="pe-table-card" style="margin-top:10px">
+    <div class="table-scroll"><table class="pe-table" id="tbl"><colgroup><col style="width:128px"><col style="width:150px"><col><col style="width:80px"><col style="width:120px"><col style="width:76px"><col style="width:96px"><col><col style="width:104px"></colgroup><thead></thead><tbody></tbody></table></div>
+  </div>
 
-  <section class="card" style="margin-top:12px">
+  <div id="drill" hidden>
+    <div class="band"><h3 id="drill-title"></h3><div class="zoom" id="drill-filter" role="group" aria-label="Which clicks"></div></div>
+    <section class="card" id="drill-list"></section>
+  </div>
+
+  <div class="band"><h3>Is a click at the cart incremental?</h3></div>
+  <section class="card">
     <div class="incr">
       <div>
-        <h2>Is a click fired at the cart incremental?</h2>
-        <p class="note" style="margin-bottom:10px">Walmart, US. Each shopper's stage is fixed at their first cart or checkout view, before any click; shoppers an affiliate brought to the cart are excluded. Share who order within 2 hours.</p>
+        <div class="metric-title" id="incr-title">Ordered within 2 h</div>
+        <div class="legend"><span><i style="background:var(--s1)"></i>Affiliate click fired</span><span><i style="background:var(--s2)"></i>No click</span></div>
         <div class="bars" id="incr-bars"></div>
       </div>
-      <div>
-        <div class="note">Shoppers who got a click</div>
-        <div class="big" id="incr-big"></div>
-        <div style="font-weight:600">orders, vs expected without the click</div>
-        <div class="note" id="incr-ci"></div>
+      <div class="result">
+        <div class="metric-title">Orders with the click</div>
+        <div class="metric-header"><p class="metric-value" id="incr-val"></p></div>
+        <div class="metric-date" id="incr-sub"></div>
       </div>
     </div>
   </section>
-
-  <section class="card" style="margin-top:12px">
-    <div class="card-head">
-      <div><h2>Publishers</h2><p class="note">Click a row to see that publisher's clicks and what the shopper did just before and after each one.</p></div>
-      <input type="search" id="q" placeholder="Filter publisher or source" aria-label="Filter publishers">
-    </div>
-    <div class="table-wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
-  </section>
-
-  <section class="card drill" id="drill" hidden>
-    <div class="card-head">
-      <div><h2 id="drill-title"></h2><p class="note" id="drill-note"></p></div>
-      <div class="seg" id="drill-filter" role="group" aria-label="Which clicks to show"></div>
-    </div>
-    <div id="drill-list"></div>
-  </section>
-
-  <footer>
-    <p><b>Status.</b> <span class="s-hold">Hold payouts</span>: any click without a landing, or ≥ 3 orders with half or more from flagged clicks.
-      <span class="s-review">Review</span>: ≥ 20% of clicks flagged, or any order from a flagged click.
-      <span class="s-ok">OK</span>: neither. Publishers with fewer than 10 clicks and no flagged click are marked low volume.</p>
-    <p><b>Strong indicators</b>: click without landing · in the brand's cart or checkout within the look-back · on the brand's site, untagged, within the look-back · publisher-bought search ad.
-      Medium: brand search or coupon / cash-back site in the 60 s before. Review: landings on 2+ other advertisers within ±2 min. Weak: no activity in the 30 min before.</p>
-    <p><b>US estimates</b> = panel count × the brand's scale factor (calibrated on Similarweb). Commission at risk = flagged orders × scale × average order × commission × 365.
-      Defaults: Walmart $112.50 and 2.5% (AOV $100–125, commission 1–4%); mattress brands $860 and 5% (Saatva AOV, commission 3–10%). One day of panel data: treat small counts as leads, not verdicts.</p>
-    <p>Source: github.com/Hagaygro/partnerize-assignment · built from the pipeline by dashboard/build_dashboard.py</p>
-  </footer>
 </div>
-<div class="tip" id="tip" role="tooltip"></div>
+<div class="hover" id="hover" role="tooltip"></div>
 
 <script>
 const DATA = /*__DATA__*/null;
@@ -275,19 +237,30 @@ function el(tag, attrs = {}, ...kids) {
   return n;
 }
 const fmtInt = (v) => Math.round(v).toLocaleString("en-US");
-const fmtPct = (v, d = 0) => (isFinite(v) ? (v * 100).toFixed(d) + "%" : "—");
+const fmtPct = (v, d = 0) => (isFinite(v) ? (v * 100).toFixed(d) + "%" : "–");
 function fmtK(v) {
-  if (!isFinite(v)) return "—";
+  if (!isFinite(v)) return "–";
   if (v >= 1e6) return (v / 1e6).toFixed(1) + "M";
   if (v >= 1e4) return Math.round(v / 1e3) + "K";
   if (v >= 1e3) return (v / 1e3).toFixed(1) + "K";
   return String(Math.round(v));
 }
-const fmtUsd = (v) => (v > 0 ? "$" + fmtK(v) : "—");
+const fmtUsd = (v) => (v > 0 ? "$" + fmtK(v) : "–");
 function fmtSecs(s) {
   if (s < 60) return s + " s";
   if (s < 3600) return (s / 60).toFixed(s < 600 ? 1 : 0) + " min";
   return (s / 3600).toFixed(1) + " h";
+}
+// Definitions sit behind an info icon instead of as small print on the page.
+function info(text, right = false) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 16 16"); svg.setAttribute("fill", "none"); svg.setAttribute("stroke", "currentColor"); svg.setAttribute("stroke-width", "1.4");
+  const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  c.setAttribute("cx", "8"); c.setAttribute("cy", "8"); c.setAttribute("r", "6.5");
+  const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  p.setAttribute("d", "M8 7.2v4M8 4.8v.1"); p.setAttribute("stroke-linecap", "round");
+  svg.append(c, p);
+  return el("span", { class: "info" + (right ? " right" : ""), tabindex: "0", "aria-label": "Definition" }, svg, el("span", { class: "tip" }, text));
 }
 
 // ---------- signals ----------
@@ -300,48 +273,43 @@ const SIGNALS = [
   { key: "cp", name: "Coupon / cash-back just before", tier: "medium", test: (c) => c.cp },
   { key: "bu", name: "Multi-brand burst", tier: "review", test: (c) => c.bu },
   { key: "nr", name: "No visible referrer", tier: "weak", test: (c) => c.nr },
-  { key: "none", name: "No indicator", tier: "", test: () => true },
+  { key: "none", name: "No signal", tier: "", test: () => true },
 ];
-function classify(c, L) {
-  for (const s of SIGNALS) if (s.test(c, L)) return s;
-}
+const classify = (c, L) => SIGNALS.find((s) => s.test(c, L));
 
 // ---------- state ----------
-const state = { brand: "Walmart", lookback: 1800, sortKey: "risk", sortDir: -1, q: "", pub: null, drillMode: "flagged", econ: {} };
+const state = { brand: "Walmart", lookback: 1800, sortKey: "risk", sortDir: -1, q: "", pub: null, drillMode: "flagged", shown: 20, econ: {} };
 for (const b of DATA.brands) state.econ[b.brand] = { aov: b.aov, comm: b.commission };
 const hosts = DATA.hosts;
 const brandInfo = Object.fromEntries(DATA.brands.map((b) => [b.brand, b]));
-try { const t = localStorage.getItem("prm-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+const BRAND_DOMAIN = { Walmart: "walmart.com", Saatva: "saatva.com", Nectar: "nectarsleep.com", Helix: "helixsleep.com", DreamCloud: "dreamcloudsleep.com" };
 
-// ---------- tooltip ----------
-const tip = $("#tip");
-function showTip(ev, rows) {
-  tip.replaceChildren(...rows);
-  tip.style.display = "block";
-  const r = ev.currentTarget.getBoundingClientRect();
-  const x = ev.clientX ?? r.left + r.width / 2, y = ev.clientY ?? r.top;
-  const w = tip.offsetWidth, h = tip.offsetHeight;
-  tip.style.left = Math.min(window.innerWidth - w - 8, x + 12) + "px";
-  tip.style.top = (y + h + 20 > window.innerHeight ? y - h - 12 : y + 14) + "px";
-}
-const hideTip = () => (tip.style.display = "none");
-function tipRow(color, value, label) {
-  return el("div", { class: "r" }, el("i", { style: `background:${color}` }), el("b", {}, value), el("span", {}, label));
-}
-function bindTip(node, build) {
+// ---------- hover box ----------
+const hover = $("#hover");
+function bindHover(node, build) {
+  const show = (e) => {
+    hover.replaceChildren(...build());
+    hover.style.display = "block";
+    const r = node.getBoundingClientRect();
+    const x = e.clientX ?? r.left + 20, y = e.clientY ?? r.top;
+    const w = hover.offsetWidth, h = hover.offsetHeight;
+    hover.style.left = Math.min(innerWidth - w - 8, x + 14) + "px";
+    hover.style.top = (y + h + 24 > innerHeight ? y - h - 12 : y + 16) + "px";
+  };
   node.tabIndex = 0;
-  node.addEventListener("pointermove", (e) => showTip(e, build()));
-  node.addEventListener("pointerleave", hideTip);
-  node.addEventListener("focus", (e) => showTip(e, build()));
-  node.addEventListener("blur", hideTip);
+  node.addEventListener("pointermove", show);
+  node.addEventListener("focus", show);
+  node.addEventListener("pointerleave", () => (hover.style.display = "none"));
+  node.addEventListener("blur", () => (hover.style.display = "none"));
 }
+const hoverRow = (color, value, label) => el("div", { class: "r" }, el("i", { style: `background:${color}` }), el("b", {}, value), label);
 
 // ---------- computation ----------
 function compute() {
   const L = state.lookback;
   const info = brandInfo[state.brand];
   const econ = state.econ[state.brand];
-  const valuePerOrder = info.scale * econ.aov * (econ.comm / 100) * 365;   // $ / year per panel order
+  const valuePerOrder = info.scale * econ.aov * (econ.comm / 100) * 365;
   const clicks = DATA.clicks.filter((c) => c.b === state.brand).map((c) => {
     const s = classify(c, L);
     return { ...c, sig: s, strong: s.tier === "strong" };
@@ -352,7 +320,7 @@ function compute() {
   for (const c of clicks) {
     tot.flagged += c.strong; tot.orders += c.cv; tot.flaggedOrders += c.strong && c.cv;
     const g = sig.get(c.sig.key); g.clicks++; g.orders += c.cv;
-    if (!pubs.has(c.p)) pubs.set(c.p, { p: c.p, n: c.n, clicks: 0, flagged: 0, orders: 0, flaggedOrders: 0, nl: 0, sigs: {}, from: {}, list: [] });
+    if (!pubs.has(c.p)) pubs.set(c.p, { p: c.p, clicks: 0, flagged: 0, orders: 0, flaggedOrders: 0, nl: 0, sigs: {}, from: {}, list: [] });
     const p = pubs.get(c.p);
     p.clicks++; p.flagged += c.strong; p.orders += c.cv; p.flaggedOrders += c.strong && c.cv; p.nl += c.nl;
     if (c.strong) p.sigs[c.sig.name] = (p.sigs[c.sig.name] || 0) + 1;
@@ -363,22 +331,22 @@ function compute() {
     p.flagShare = p.flagged / p.clicks;
     p.orderFlagShare = p.orders ? p.flaggedOrders / p.orders : NaN;
     p.risk = p.flaggedOrders * valuePerOrder;
-    p.topSig = Object.entries(p.sigs).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
-    p.source = Object.entries(p.from).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+    p.topSig = Object.entries(p.sigs).sort((a, b) => b[1] - a[1])[0]?.[0] || "–";
+    p.source = Object.entries(p.from).sort((a, b) => b[1] - a[1])[0]?.[0] || "–";
     if (p.nl > 0 || (p.orders >= 3 && p.flaggedOrders / p.orders >= 0.5)) p.status = "hold";
     else if (p.flagShare >= 0.2 || p.flaggedOrders > 0) p.status = "review";
     else p.status = p.clicks < 10 ? "low" : "ok";
   }
   tot.risk = tot.flaggedOrders * valuePerOrder;
-  return { info, econ, clicks, tot, pubs: [...pubs.values()], sig: [...sig.values()], valuePerOrder };
+  return { info, clicks, tot, pubs: [...pubs.values()], sig: [...sig.values()] };
 }
 
 // ---------- render ----------
 function renderControls() {
-  const bs = $("#brand"); bs.replaceChildren();
+  const tabs = $("#brand"); tabs.replaceChildren();
   for (const b of DATA.brands) {
-    bs.append(el("button", { type: "button", "aria-pressed": String(b.brand === state.brand),
-      onclick: () => { state.brand = b.brand; state.pub = null; render(); } }, b.brand + (b.client ? " ★" : "")));
+    tabs.append(el("button", { role: "tab", type: "button", "aria-selected": String(b.brand === state.brand),
+      onclick: () => { state.brand = b.brand; state.pub = null; render(); } }, b.brand + (b.client ? " (client)" : "")));
   }
   const lb = $("#lookback"); lb.replaceChildren();
   for (const [s, label] of [[120, "2 min"], [600, "10 min"], [1800, "30 min"]]) {
@@ -389,125 +357,113 @@ function renderControls() {
   $("#comm").value = state.econ[state.brand].comm;
 }
 
-function renderTiles(m) {
-  const { tot, info } = m;
-  const t = $("#tiles"); t.replaceChildren();
-  const tile = (k, v, c, cls = "") => el("div", { class: "tile " + cls }, el("div", { class: "k" }, k), el("div", { class: "v" }, v), el("div", { class: "c" }, c));
-  t.append(
-    tile("Affiliate clicks (panel)", fmtInt(tot.clicks), `≈ ${fmtK(tot.clicks * info.scale)} US clicks a day`),
-    tile("Clicks flagged", fmtPct(tot.flagged / tot.clicks), `${fmtInt(tot.flagged)} with a strong indicator`),
-    tile("Affiliate orders (panel)", fmtInt(tot.orders), tot.orders ? `${fmtPct(tot.orders / tot.clicks, 2)} of clicks convert` : "No order followed a click this day"),
-    tile("Orders from flagged clicks", tot.orders ? fmtPct(tot.flaggedOrders / tot.orders) : "—",
-      tot.orders ? `${fmtInt(tot.flaggedOrders)} of ${fmtInt(tot.orders)} credited orders` : "Needs more days of data", tot.orders ? "alert" : ""),
-    tile("Commission on flagged orders", tot.risk ? fmtUsd(tot.risk) : "—",
-      tot.risk ? "a year, US estimate" : "No flagged orders in the panel", tot.risk ? "alert" : ""),
+function card(title, value, sub, tip, right = false) {
+  return el("div", { class: "card" },
+    el("div", { class: "metric-title" }, title, tip ? info(tip, right) : null),
+    el("div", { class: "metric-header" }, el("p", { class: "metric-value" }, value), sub ? el("span", { class: "metric-date" }, sub) : null));
+}
+function renderCards(m) {
+  const { tot, info: bi } = m;
+  const has = tot.orders > 0;
+  $("#cards").replaceChildren(
+    card("Affiliate clicks", fmtInt(tot.clicks), `${fmtK(tot.clicks * bi.scale)} US / day`,
+      "Affiliate clicks by US users of the browsing panel on this day.\nUS / day scales the panel count by the brand's factor, calibrated on Similarweb traffic."),
+    card("Flagged", fmtPct(tot.flagged / tot.clicks), `${fmtInt(tot.flagged)} clicks`,
+      "Clicks with a strong signal: no landing, fired at the cart or checkout, fired while already on the site, or from a publisher-bought search ad."),
+    card("Orders", fmtInt(tot.orders), has ? fmtPct(tot.orders / tot.clicks, 2) + " conv." : null,
+      "Orders credited to an affiliate click: last click, same day."),
+    card("Orders from flagged", has ? fmtPct(tot.flaggedOrders / tot.orders) : "–", has ? `${fmtInt(tot.flaggedOrders)} orders` : null),
+    card("Commission at risk", tot.risk ? fmtUsd(tot.risk) : "–", tot.risk ? "per year" : null,
+      "Flagged orders × US scale × average order × commission × 365.\nAverage order and commission are the inputs above.", true),
   );
 }
 
 function renderPubChart(m) {
   const useOrders = m.tot.orders > 0;
-  $("#pub-chart-title").textContent = useOrders ? "Where the affiliate orders go" : "Where the affiliate clicks go";
-  $("#pub-chart-note").textContent = useOrders
-    ? "Top publishers by credited orders, split by whether the click carried a strong indicator."
-    : "No order followed an affiliate click this day, so publishers are shown by clicks.";
-  const key = useOrders ? ["orders", "flaggedOrders"] : ["clicks", "flagged"];
-  const top = [...m.pubs].sort((a, b) => b[key[0]] - a[key[0]] || b.clicks - a.clicks).slice(0, 10);
-  const max = Math.max(1, ...top.map((p) => p[key[0]]));
+  $("#pub-title").textContent = useOrders ? "Orders by publisher" : "Clicks by publisher";
+  const [tk, fk] = useOrders ? ["orders", "flaggedOrders"] : ["clicks", "flagged"];
+  const q = state.q.trim().toLowerCase();
+  const top = m.pubs.filter((p) => !q || p.p.toLowerCase().includes(q) || p.source.toLowerCase().includes(q))
+    .sort((a, b) => b[tk] - a[tk] || b.clicks - a.clicks).slice(0, 10);
+  const max = Math.max(1, ...top.map((p) => p[tk]));
   const box = $("#pub-bars"); box.replaceChildren();
   for (const p of top) {
-    const total = p[key[0]], flagged = p[key[1]], clean = total - flagged;
-    const width = (v) => `${(v / max) * 82}%`;
-    const stack = el("div", { class: "stack", style: `width:${width(total)}` });
-    if (clean) stack.append(el("span", { style: `flex:${clean};background:var(--clean)` }));
-    if (flagged) stack.append(el("span", { style: `flex:${flagged};background:var(--flag)` }));
-    const row = el("div", { class: "track hit" }, stack, el("span", { class: "val" }, `${fmtInt(total)}${flagged ? ` · ${fmtPct(flagged / total)} flagged` : ""}`));
-    bindTip(row, () => [el("div", { style: "font-weight:600;margin-bottom:4px" }, p.p),
-      tipRow("var(--flag)", fmtInt(flagged), useOrders ? "orders from flagged clicks" : "flagged clicks"),
-      tipRow("var(--clean)", fmtInt(clean), useOrders ? "orders, no strong signal" : "clicks, no strong signal"),
-      el("div", { class: "note", style: "margin-top:4px" }, `Arrives from: ${p.source}`)]);
-    row.addEventListener("click", () => selectPub(p.p));
-    box.append(el("div", { class: "name", title: p.p }, p.p, " ", el("small", {}, p.source !== "—" ? `· ${p.source}` : "")), row);
+    const total = p[tk], flagged = p[fk], clean = total - flagged;
+    const stack = el("div", { class: "stack", style: `width:${(total / max) * 78}%` });
+    if (flagged) stack.append(el("span", { style: `flex:${flagged};background:var(--s1)` }));
+    if (clean) stack.append(el("span", { style: `flex:${clean};background:var(--s2)` }));
+    const row = el("div", { class: "track hit", onclick: () => selectPub(p.p) }, stack, el("span", { class: "val" }, fmtInt(total)));
+    bindHover(row, () => [el("div", { class: "hh" }, p.p),
+      hoverRow("var(--s1)", fmtInt(flagged), " flagged"),
+      hoverRow("var(--s2)", fmtInt(clean), " no strong signal"),
+      el("div", { style: "margin-top:4px" }, `From ${p.source}`)]);
+    box.append(el("div", { class: "name", title: `${p.p} · ${p.source}` }, p.p, " ", el("span", {}, p.source !== "–" ? p.source : "")), row);
   }
-  if (!top.length) box.append(el("div", { class: "empty" }, "No clicks."));
+  if (!top.length) box.append(el("div", { class: "empty" }, "No publishers."));
 }
 
 function renderSignals(m) {
-  const box = $("#sig"); box.replaceChildren();
-  const rows = m.sig.filter((g) => g.clicks > 0);
-  const max = Math.max(...rows.map((g) => Math.max(g.clicks / m.tot.clicks, m.tot.orders ? g.orders / m.tot.orders : 0)), 0.01);
-  for (const g of rows) {
+  const tb = $("#sig"); tb.replaceChildren();
+  for (const g of m.sig.filter((x) => x.clicks > 0)) {
     const cs = g.clicks / m.tot.clicks, os = m.tot.orders ? g.orders / m.tot.orders : NaN;
-    const pair = el("div", { class: "pair hit" },
-      el("div", { class: "row" }, el("div", { class: "bar", style: `width:${(cs / max) * 75}%;background:var(--m-clicks)` }), el("span", { class: "val" }, fmtPct(cs, cs < 0.1 ? 1 : 0))),
-      el("div", { class: "row" }, el("div", { class: "bar", style: `width:${isFinite(os) ? (os / max) * 75 : 0}%;background:var(--m-orders)` }), el("span", { class: "val" }, isFinite(os) ? fmtPct(os, os < 0.1 && os > 0 ? 1 : 0) : "no orders")));
-    bindTip(pair, () => [el("div", { style: "font-weight:600;margin-bottom:4px" }, g.s.name),
-      tipRow("var(--m-clicks)", fmtInt(g.clicks), "clicks"),
-      tipRow("var(--m-orders)", fmtInt(g.orders), "orders"),
-      el("div", { class: "note", style: "margin-top:4px" }, `Conversion: ${fmtPct(g.orders / g.clicks, 1)}`)]);
-    box.append(el("div", { class: "name" }, g.s.name, g.s.tier ? el("span", { class: "tier" }, g.s.tier) : null), pair);
+    tb.append(el("tr", {},
+      el("td", { class: "pe-l" }, g.s.name),
+      el("td", {}, fmtPct(cs, cs < 0.1 ? 1 : 0)),
+      el("td", {}, isFinite(os) ? fmtPct(os, os > 0 && os < 0.1 ? 1 : 0) : "–"),
+      el("td", {}, fmtPct(g.orders / g.clicks, 1))));
   }
 }
 
 function renderIncrementality() {
+  $("#incr-title").append(" ", info("Walmart, US shoppers. Each shopper's stage is fixed at their first cart or checkout view, before any click. Shoppers an affiliate brought to the cart are left out.\n\nCompared: shoppers who then got an affiliate click vs shoppers who did not."));
   const box = $("#incr-bars"); box.replaceChildren();
-  const rows = DATA.incrementality;
   for (const stage of ["cart", "checkout"]) {
-    for (const r of rows.filter((x) => x.stage === stage).sort((a, b) => a.grp.startsWith("Affiliate") - b.grp.startsWith("Affiliate"))) {
+    const rows = DATA.incrementality.filter((x) => x.stage === stage)
+      .sort((a, b) => b.grp.startsWith("Affiliate") - a.grp.startsWith("Affiliate"));
+    rows.forEach((r, i) => {
       const treated = r.grp.startsWith("Affiliate");
       const v = +r.order_rate_pct;
-      const bar = el("div", { class: "track hit" },
-        el("div", { class: "stack", style: `width:${v * 0.9}%` }, el("span", { style: `flex:1;background:var(${treated ? "--flag" : "--clean"})` })),
-        el("span", { class: "val" }, `${v.toFixed(0)}%  (n = ${fmtInt(+r.users)})`));
-      bindTip(bar, () => [el("div", { style: "font-weight:600;margin-bottom:4px" }, r.grp),
-        tipRow(`var(${treated ? "--flag" : "--clean"})`, `${r.orders} of ${r.users}`, "ordered within 2 h")]);
-      box.append(el("div", { class: "name" }, stage === "cart" ? "Viewed the cart" : "Reached checkout", " ",
-        el("small", {}, treated ? "· click fired after" : "· no click")), bar);
-    }
+      const bar = el("div", { class: "track" },
+        el("div", { class: "stack", style: `width:${v * 0.85}%` }, el("span", { style: `flex:1;background:var(${treated ? "--s1" : "--s2"})` })),
+        el("span", { class: "val" }, `${v.toFixed(0)}%`));
+      bindHover(bar, () => [el("div", { class: "hh" }, `${stage === "cart" ? "Viewed the cart" : "Reached checkout"} · ${treated ? "click fired" : "no click"}`),
+        hoverRow(`var(${treated ? "--s1" : "--s2"})`, `${r.orders} of ${fmtInt(+r.users)}`, " ordered")]);
+      box.append(el("div", { class: "name" }, i === 0 ? (stage === "cart" ? "Viewed the cart" : "Reached checkout") : ""), bar);
+    });
   }
   const s = DATA.incrementality_summary;
-  $("#incr-big").textContent = `${s.observed_orders} vs ${s.expected_orders_without_click}`;
-  const maxIncr = Math.round(100 * (1 - 1 / +s.ratio_hi95));
-  $("#incr-ci").textContent = `${s.injected_users} shoppers · ratio ${s.observed_to_expected} (95% CI ${s.ratio_lo95}–${s.ratio_hi95}), so at most ~${maxIncr}% of these orders could be incremental.`;
+  $("#incr-val").replaceChildren(el("b", {}, s.observed_orders), ` vs ${s.expected_orders_without_click} without it`);
+  $("#incr-sub").textContent = `${s.injected_users} shoppers · no lift`;
 }
 
-const STATUS = {
-  hold: ["Hold payouts", "s-hold", "M8 1.5 14.5 13.5h-13z"],
-  review: ["Review", "s-review", "M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2z"],
-  ok: ["OK", "s-ok", "M3 8.5 6.5 12 13 4.5"],
-  low: ["Low volume", "s-low", "M3 8h10"],
-};
-function statusEl(st) {
-  const [label, cls, d] = STATUS[st];
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", "14"); svg.setAttribute("height", "14"); svg.setAttribute("viewBox", "0 0 16 16"); svg.setAttribute("aria-hidden", "true");
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", d);
-  const filled = st === "hold" || st === "review";
-  path.setAttribute("fill", filled ? "currentColor" : "none");
-  path.setAttribute("stroke", "currentColor"); path.setAttribute("stroke-width", filled ? "0" : "2.2"); path.setAttribute("stroke-linecap", "round");
-  svg.append(path);
-  return el("span", { class: "status " + cls }, svg, label);
-}
-
+const STATUS_TIP = "Hold: any click without a landing, or 3+ orders with half or more from flagged clicks.\nReview: 20%+ of clicks flagged, or any order from a flagged click.\nOK: neither.\nLow volume: under 10 clicks, nothing flagged.";
+const STATUS = { hold: ["Hold", "t-hold"], review: ["Review", "t-review"], ok: ["OK", "t-ok"], low: ["Low volume", "t-low"] };
 const COLS = [
-  { key: "status", label: "Status", sort: (p) => ({ hold: 3, review: 2, ok: 1, low: 0 })[p.status] * 1e12 + p.risk, cell: (p) => statusEl(p.status) },
-  { key: "p", label: "Publisher", sort: (p) => p.p, cell: (p) => el("span", { class: "mono" }, p.p) },
-  { key: "source", label: "Arrives from", sort: (p) => p.source, cell: (p) => p.source },
-  { key: "clicks", label: "Clicks", num: 1, sort: (p) => p.clicks, cell: (p) => fmtInt(p.clicks) },
-  { key: "flagShare", label: "Flagged", num: 1, sort: (p) => p.flagShare, cell: (p) => el("span", {}, el("span", { class: "mini" }, el("b", { style: `width:${p.flagShare * 100}%` })), fmtPct(p.flagShare)) },
-  { key: "orders", label: "Orders", num: 1, sort: (p) => p.orders, cell: (p) => fmtInt(p.orders) },
-  { key: "orderFlagShare", label: "Orders flagged", num: 1, sort: (p) => (isFinite(p.orderFlagShare) ? p.orderFlagShare : -1), cell: (p) => fmtPct(p.orderFlagShare) },
-  { key: "topSig", label: "Main signal", sort: (p) => p.topSig, cell: (p) => p.topSig },
-  { key: "risk", label: "Commission at risk / yr", num: 1, sort: (p) => p.risk, cell: (p) => fmtUsd(p.risk) },
+  { key: "status", label: "Status", sort: (p) => ({ hold: 3, review: 2, ok: 1, low: 0 })[p.status] * 1e12 + p.risk,
+    cell: (p) => el("span", { class: "tag " + STATUS[p.status][1] }, STATUS[p.status][0]) },
+  { key: "p", label: "Publisher", cls: "pe-l", sort: (p) => p.p, cell: (p) => el("span", { class: "mono" }, p.p) },
+  { key: "source", label: "Arrives from", cls: "pe-l", sort: (p) => p.source, cell: (p) => p.source },
+  { key: "clicks", label: "Clicks", sort: (p) => p.clicks, cell: (p) => fmtInt(p.clicks) },
+  { key: "flagShare", label: "Flagged", sort: (p) => p.flagShare,
+    cell: (p) => el("span", {}, el("span", { class: "mini" }, el("b", { style: `width:${p.flagShare * 100}%` })), fmtPct(p.flagShare)) },
+  { key: "orders", label: "Orders", sort: (p) => p.orders, cell: (p) => fmtInt(p.orders) },
+  { key: "orderFlagShare", label: "Orders flagged", sort: (p) => (isFinite(p.orderFlagShare) ? p.orderFlagShare : -1), cell: (p) => fmtPct(p.orderFlagShare) },
+  { key: "topSig", label: "Main signal", cls: "pe-l", sort: (p) => p.topSig, cell: (p) => p.topSig },
+  { key: "risk", label: "At risk / yr", sort: (p) => p.risk, cell: (p) => fmtUsd(p.risk) },
 ];
 
 function renderTable(m) {
-  const thead = $("#tbl thead"), tbody = $("#tbl tbody");
-  thead.replaceChildren(el("tr", {}, COLS.map((c) => el("th", {
-    class: c.num ? "num" : "", scope: "col", tabindex: "0",
-    "aria-sort": state.sortKey === c.key ? (state.sortDir < 0 ? "descending" : "ascending") : null,
-    onclick: () => sortBy(c.key), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sortBy(c.key); } },
-  }, c.label))));
+  $("#tbl thead").replaceChildren(el("tr", {}, COLS.map((c) => {
+    const th = el("th", { scope: "col", tabindex: "0",
+      "aria-sort": state.sortKey === c.key ? (state.sortDir < 0 ? "descending" : "ascending") : null,
+      onclick: () => sortBy(c.key), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sortBy(c.key); } } }, c.label);
+    if (c.key === "status") {
+      const i = info(STATUS_TIP);
+      i.addEventListener("click", (e) => e.stopPropagation());
+      th.append(" ", i);
+    }
+    return th;
+  })));
   const col = COLS.find((c) => c.key === state.sortKey) || COLS[0];
   const q = state.q.trim().toLowerCase();
   const rows = m.pubs.filter((p) => !q || p.p.toLowerCase().includes(q) || p.source.toLowerCase().includes(q))
@@ -516,11 +472,12 @@ function renderTable(m) {
       const r = typeof x === "string" ? x.localeCompare(y) : x - y;
       return (r || b.clicks - a.clicks) * state.sortDir;
     });
-  tbody.replaceChildren(...rows.map((p) => el("tr", {
+  const tb = $("#tbl tbody");
+  tb.replaceChildren(...rows.map((p) => el("tr", {
     class: p.p === state.pub ? "sel" : "", tabindex: "0",
     onclick: () => selectPub(p.p), onkeydown: (e) => { if (e.key === "Enter") selectPub(p.p); },
-  }, COLS.map((c) => el("td", { class: c.num ? "num" : "" }, c.cell(p))))));
-  if (!rows.length) tbody.append(el("tr", {}, el("td", { colspan: COLS.length, class: "empty" }, "No publisher matches.")));
+  }, COLS.map((c) => el("td", { class: c.cls || "" }, c.cell(p))))));
+  if (!rows.length) tb.append(el("tr", {}, el("td", { colspan: COLS.length, class: "pe-l empty" }, "No publisher matches.")));
 }
 function sortBy(key) {
   if (state.sortKey === key) state.sortDir *= -1;
@@ -529,37 +486,30 @@ function sortBy(key) {
 }
 function selectPub(p) {
   state.pub = state.pub === p ? null : p;
+  state.shown = 20;
   render();
   if (state.pub) $("#drill").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function journeyEl(c) {
-  const brandDomain = { Walmart: "walmart.com", Saatva: "saatva.com", Nectar: "nectarsleep.com", Helix: "helixsleep.com", DreamCloud: "dreamcloudsleep.com" }[c.b];
-  const parts = [];
-  if (!c.j.length) parts.push(el("span", { class: "step" }, el("span", { class: "h" }, "No activity"), el("span", { class: "s" }, "in the 30 min before")));
-  const stepEl = ([h, sec, s], when) => {
+  const domain = BRAND_DOMAIN[c.b];
+  const step = ([h, sec, s], when) => {
     const host = hosts[h];
-    const isBrand = host === brandDomain || host === "www." + brandDomain;
+    const isBrand = host === domain || host === "www." + domain;
     const isCart = isBrand && sec && /^\/(cart|checkout|checkouts|basket)$/i.test(sec);
     return el("span", { class: "step" + (isCart ? " cart" : isBrand ? " brand" : "") },
       el("span", { class: "h", title: host + (sec || "") }, host, sec ? el("b", {}, " " + sec) : null),
       el("span", { class: "s" }, s === 0 ? "same second" : `${fmtSecs(s)} ${when}`));
   };
-  for (const st of c.j) {
-    parts.push(stepEl(st, "before"));
-    parts.push(el("span", { class: "arrow", "aria-hidden": "true" }, "→"));
-  }
-  if (!c.j.length) parts.push(el("span", { class: "arrow", "aria-hidden": "true" }, "→"));
+  const arrow = () => el("span", { class: "arrow", "aria-hidden": "true" }, "→");
+  const parts = [];
+  if (!c.j.length) parts.push(el("span", { class: "step" }, el("span", { class: "h" }, "No prior activity"), el("span", { class: "s" }, "30 min before")), arrow());
+  for (const st of c.j) parts.push(step(st, "before"), arrow());
   parts.push(el("span", { class: "step click-step" }, el("span", { class: "h" }, `${c.n} click`), el("span", { class: "s" }, c.nl ? "site never loads" : `lands on ${c.ls}`)));
-  // After the click: the next sites and the order, in time order.
-  const later = c.a.map((st) => ({ t: st[2], node: stepEl(st, "after") }));
-  if (c.cv) later.push({ t: c.to, node: el("span", { class: "step", style: "border:1px solid var(--ok)" },
-    el("span", { class: "h" }, "Order"), el("span", { class: "s" }, c.to === 0 ? "same second" : `${fmtSecs(c.to)} later`)) });
+  const later = c.a.map((st) => ({ t: st[2], node: step(st, "after") }));
+  if (c.cv) later.push({ t: c.to, node: el("span", { class: "step order" }, el("span", { class: "h" }, "Order"), el("span", { class: "s" }, c.to === 0 ? "same second" : `${fmtSecs(c.to)} later`)) });
   later.sort((x, y) => x.t - y.t);
-  for (const x of later) {
-    parts.push(el("span", { class: "arrow", "aria-hidden": "true" }, "→"));
-    parts.push(x.node);
-  }
+  for (const x of later) parts.push(arrow(), x.node);
   return el("div", { class: "journey" }, parts);
 }
 
@@ -568,27 +518,28 @@ function renderDrill(m) {
   const p = m.pubs.find((x) => x.p === state.pub);
   if (!p) { box.hidden = true; return; }
   box.hidden = false;
-  $("#drill-title").textContent = `${p.p} · ${state.brand}`;
-  $("#drill-note").textContent = `${fmtInt(p.clicks)} clicks, ${fmtInt(p.flagged)} flagged, ${fmtInt(p.orders)} orders. Typical source: ${p.source}. Journeys show the sites visited in the 30 min before each click and the first two after it; on the brand's own site, the section of the site.`;
+  $("#drill-title").replaceChildren(el("span", {}, p.p),
+    el("span", { style: "color:var(--grey-7);font-size:14px;font-weight:400" }, `${fmtInt(p.clicks)} ${p.clicks === 1 ? "click" : "clicks"} · ${fmtInt(p.flagged)} flagged · ${fmtInt(p.orders)} ${p.orders === 1 ? "order" : "orders"}`));
   const f = $("#drill-filter"); f.replaceChildren();
-  for (const [k, label] of [["flagged", "Flagged"], ["orders", "With an order"], ["all", "All"]]) {
-    f.append(el("button", { type: "button", "aria-pressed": String(state.drillMode === k), onclick: () => { state.drillMode = k; render(); } }, label));
+  for (const [k, label] of [["flagged", "Flagged"], ["orders", "Orders"], ["all", "All"]]) {
+    f.append(el("button", { type: "button", "aria-pressed": String(state.drillMode === k), onclick: () => { state.drillMode = k; state.shown = 20; render(); } }, label));
   }
-  let list = p.list.filter((c) => state.drillMode === "all" || (state.drillMode === "flagged" ? c.strong : c.cv));
-  list.sort((a, b) => b.strong - a.strong || b.cv - a.cv || a.t.localeCompare(b.t));
-  const shown = list.slice(0, 40);
+  const list = p.list.filter((c) => state.drillMode === "all" || (state.drillMode === "flagged" ? c.strong : c.cv))
+    .sort((a, b) => b.strong - a.strong || b.cv - a.cv || a.t.localeCompare(b.t));
   const out = $("#drill-list"); out.replaceChildren();
-  if (!shown.length) out.append(el("div", { class: "empty" }, "No clicks in this view."));
-  for (const c of shown) {
+  if (!list.length) out.append(el("div", { class: "empty" }, "No clicks here."));
+  for (const c of list.slice(0, state.shown)) {
     out.append(el("div", { class: "click" },
       el("div", { class: "click-head" },
-        el("span", { class: "mono" }, `${c.t} UTC`),
-        el("span", { class: "tag" + (c.strong ? " f" : "") }, c.sig.name),
-        c.cv ? el("span", { class: "tag o" }, "Converted") : null,
-        c.cc ? el("span", { class: "tag" }, "Coupon in link") : null),
+        el("span", { class: "mono", style: "color:var(--grey-8)" }, `${c.t} UTC`),
+        el("span", { class: "tag " + (c.strong ? "t-flag" : "t-sig") }, c.sig.name),
+        c.cv ? el("span", { class: "tag t-order" }, "Order") : null),
       journeyEl(c)));
   }
-  if (list.length > shown.length) out.append(el("p", { class: "note" }, `Showing ${shown.length} of ${fmtInt(list.length)} clicks.`));
+  if (list.length > state.shown) {
+    out.append(el("div", { class: "more" }, el("button", { type: "button", onclick: () => { state.shown += 40; renderDrill(compute()); } },
+      `Show more (${fmtInt(list.length - state.shown)})`)));
+  }
 }
 
 // The view lives in the URL hash, so a link opens the same brand, window and publisher.
@@ -609,7 +560,7 @@ function render() {
   writeHash();
   const m = compute();
   renderControls();
-  renderTiles(m);
+  renderCards(m);
   renderPubChart(m);
   renderSignals(m);
   renderTable(m);
@@ -617,17 +568,11 @@ function render() {
 }
 
 // ---------- wiring ----------
-$("#date").textContent = new Date(DATA.date + "T00:00:00Z").toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
-$("#aov").addEventListener("input", (e) => { const v = +e.target.value; if (v > 0) { state.econ[state.brand].aov = v; renderLight(); } });
-$("#comm").addEventListener("input", (e) => { const v = +e.target.value; if (v >= 0) { state.econ[state.brand].comm = v; renderLight(); } });
-$("#q").addEventListener("input", (e) => { state.q = e.target.value; renderTable(compute()); });
-$("#theme").addEventListener("click", () => {
-  const root = document.documentElement;
-  const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-  root.dataset.theme = dark ? "light" : "dark";
-  try { localStorage.setItem("prm-theme", root.dataset.theme); } catch (e) {}
-});
-function renderLight() { const m = compute(); renderTiles(m); renderTable(m); }
+$("#period").textContent = new Date(DATA.date + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) + " · US";
+$("#sig-title").append(" ", info("Each click counts once, under its first-ranked signal.\n\nStrong: no landing · at the cart or checkout within the look-back · on the brand's site, untagged, within the look-back · publisher-bought search ad.\nMedium: brand search or coupon site in the 60 s before.\nReview: 2+ other advertisers within ±2 min.\nWeak: no activity in the 30 min before.", true));
+$("#aov").addEventListener("input", (e) => { const v = +e.target.value; if (v > 0) { state.econ[state.brand].aov = v; const m = compute(); renderCards(m); renderTable(m); } });
+$("#comm").addEventListener("input", (e) => { const v = +e.target.value; if (v >= 0) { state.econ[state.brand].comm = v; const m = compute(); renderCards(m); renderTable(m); } });
+$("#q").addEventListener("input", (e) => { state.q = e.target.value; const m = compute(); renderTable(m); renderPubChart(m); });
 renderIncrementality();
 readHash();
 render();

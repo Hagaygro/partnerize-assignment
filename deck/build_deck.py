@@ -770,10 +770,10 @@ def slide_monitor(prs, d):
         "works for Saatva today; with Partnerize's own click and order logs instead of a one-day panel, the counts "
         "behind each status would be complete."))
     img = os.path.join(ROOT, "deck", "img")
-    ow = 6.3
+    ow = 5.9
     s.shapes.add_picture(os.path.join(img, "dashboard_overview.png"), Inches(L), Inches(1.6), width=Inches(ow))
-    box(s, L, 1.6, ow, ow * 1590 / 2560, line=GRID)
-    tx, tw = L + ow + 0.4, R - (L + ow + 0.4)
+    box(s, L, 1.6, ow, ow * 1720 / 2560, line=GRID)
+    tx, tw = L + ow + 0.5, R - (L + ow + 0.5)
     items = [
         ("Any look-back, one click", "Every click re-scored at 2, 10 or 30 minutes; the sensitivity test becomes a control"),
         ("Ranked by money, with a status", "Hold, Review or OK per publisher, by commission on flagged orders; AOV and rate are inputs"),
@@ -784,9 +784,9 @@ def slide_monitor(prs, d):
         number_badge(s, tx, y, j + 1, P_ORANGE, d=0.36, size=12)
         text(s, tx + 0.52, y - 0.02, tw - 0.52, 0.32, head, size=15, color=NAVY, bold=True)
         text(s, tx + 0.52, y + 0.33, tw - 0.52, 0.75, body, size=12.5, color=MUTED, spacing=1.05)
-    text(s, L, 5.65, CW, 0.28, "One of impact:150372's 32 orders: the click \"lands\" on the order confirmation page",
+    text(s, L, 5.72, CW, 0.28, "One of impact:150372's 32 orders: the click \"lands\" on the order confirmation page",
          size=12, color=MUTED, bold=True)
-    s.shapes.add_picture(os.path.join(img, "dashboard_journey.png"), Inches(L), Inches(5.97), width=Inches(CW * 0.85))
+    s.shapes.add_picture(os.path.join(img, "dashboard_journey.png"), Inches(L), Inches(6.04), width=Inches(CW * 0.85))
 
 
 def appendix_results(prs, d):
