@@ -63,6 +63,28 @@ lean the same way: 43% and 37% of visits come from paid search.
   Saatva's affiliate orders that is hijacked costs about **$80k–1.05M a year** ($860 average order,
   3–10% commission, 84–334 affiliate orders/day).
 
+## Publisher Risk Monitor (dashboard)
+
+`dashboard/publisher_risk_monitor.html` is a single self-contained file: open it in any browser, with no server
+or network needed. It turns the hijacking indicators into a weekly working tool for a partner manager:
+
+* **Pick a brand and a look-back window** (2 / 10 / 30 min). Every affiliate click is re-scored in the page,
+  so the sensitivity test in `10_sensitivity.sql` becomes a control.
+* **Publishers ranked by commission on flagged orders**, each with a status: *Hold payouts* (a click
+  without a landing, or ≥ 3 orders with half or more flagged), *Review* (≥ 20% of clicks flagged, or any
+  flagged order) or *OK*. Average order value and commission rate are inputs.
+* **Click a publisher to see the journey behind each click**: the sites visited in the 30 min before it and
+  the first two after it, and on the brand's own site the section (`/cart`, `/checkout` …). One Bizrate-sourced
+  publisher (impact:150372) has clicks that "land" on Walmart's order-confirmation page in the same
+  second as the order. Saatva's stuffed click shows `tatrck.com` firing the Partnerize click while the user
+  goes on to sleepnumber.com.
+* **The incrementality test** (`11_incrementality.sql`) is shown alongside.
+* The view is kept in the URL hash (`#brand=Walmart&lookback=600&pub=impact%3A150372`), so a link opens the
+  same view.
+
+Privacy: the page holds click-level data without user ids, query strings or full URLs. It keeps only the
+domains visited and, on the brand's own site, the first segment of the path.
+
 ## Approach
 
 ```
@@ -178,8 +200,13 @@ scripts/
   extract_data.py          # extracts the Parquet files, verifies CRCs
   run_pipeline.py          # runs sql/ in order with row-count checks, exports outputs/
 outputs/                   # aggregated result tables (CSV)
+dashboard/
+  build_dashboard.py       # builds the Publisher Risk Monitor from the pipeline tables
+  template.html            # the page; data is injected at build time
+  publisher_risk_monitor.html   # the built dashboard: open in a browser
 deck/
   build_deck.py            # builds the presentation from outputs/*.csv
+  img/                     # dashboard screenshots used on slide 10
   saatva_affiliate_analysis.pptx   # the deck: upload to Google Drive, open with Google Slides
 data/                      # local only (git-ignored): archive, Parquet files, DuckDB database
 ```
@@ -192,6 +219,7 @@ python3 -m venv .venv
 .venv/bin/python scripts/download_data.py   # ~9.5 GB
 .venv/bin/python scripts/extract_data.py    # -> data/raw/*.parquet (~12.6 GB)
 .venv/bin/python scripts/run_pipeline.py    # ~30 s; tables in data/analysis.duckdb, CSVs in outputs/
+.venv/bin/python dashboard/build_dashboard.py  # -> dashboard/publisher_risk_monitor.html
 .venv/bin/python deck/build_deck.py         # -> deck/saatva_affiliate_analysis.pptx
 ```
 

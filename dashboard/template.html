@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Publisher Risk Monitor</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-2: #f3f6f9;
+  --ink: #142233;
+  --ink-2: #4d5b6b;
+  --ink-3: #6f7c8a;
+  --line: #e1e6ec;
+  --navy: #0b2a4a;
+  --accent: #c9620e;
+  --clean: #2f7fd8;
+  --flag: #e0701f;
+  --flag-tint: #fff1e5;
+  --hold: #d03b3b;
+  --review: #b77800;
+  --ok: #0a8a0a;
+  --chip: #eef2f6;
+  --focus: #2f7fd8;
+  --m-clicks: #9fb0c3;
+  --m-orders: #2c4a6b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #111418;
+    --surface: #1a1d21;
+    --surface-2: #22262b;
+    --ink: #eef1f4;
+    --ink-2: #b9c1ca;
+    --ink-3: #8f99a4;
+    --line: #2e333a;
+    --navy: #e6edf5;
+    --accent: #f39a52;
+    --clean: #3f8fe8;
+    --flag: #e0701f;
+    --flag-tint: #3a2616;
+    --hold: #e66767;
+    --review: #fab219;
+    --ok: #3cc43c;
+    --chip: #2a2f35;
+    --m-clicks: #5b6e83;
+    --m-orders: #c3d0de;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111418; --surface: #1a1d21; --surface-2: #22262b; --ink: #eef1f4; --ink-2: #b9c1ca;
+  --ink-3: #8f99a4; --line: #2e333a; --navy: #e6edf5; --accent: #f39a52; --clean: #3f8fe8;
+  --flag: #e0701f; --flag-tint: #3a2616; --hold: #e66767; --review: #fab219; --ok: #3cc43c; --chip: #2a2f35;
+  --m-clicks: #5b6e83; --m-orders: #c3d0de;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.kicker { color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+h1 { margin: 4px 0 2px; font: 600 28px/1.15 Georgia, "Times New Roman", serif; color: var(--navy); }
+.sub { color: var(--ink-2); margin: 0; max-width: 760px; }
+h2 { font-size: 15px; margin: 0 0 2px; color: var(--ink); }
+.note { color: var(--ink-3); font-size: 12px; margin: 0; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-end; margin: 20px 0 16px; }
+.ctl label, .ctl .lbl { display: block; font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; color: var(--ink-2); font: inherit; padding: 5px 11px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--navy); color: var(--surface); font-weight: 600; }
+.seg button:focus-visible, button:focus-visible, input:focus-visible, tr:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+input[type=number], input[type=search] {
+  font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 6px; padding: 5px 8px; width: 96px;
+}
+input[type=search] { width: 220px; }
+.theme-btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
+
+.tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.tile .k { font-size: 12px; color: var(--ink-3); font-weight: 600; }
+.tile .v { font-size: 28px; font-weight: 700; color: var(--navy); margin: 4px 0 2px; white-space: nowrap; }
+.tile .c { font-size: 12px; color: var(--ink-2); }
+.tile.alert { background: var(--flag-tint); border-color: transparent; }
+
+.grid2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 12px; margin-top: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--ink-2); flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+.bars { display: grid; grid-template-columns: minmax(90px, 160px) 1fr; gap: 6px 10px; align-items: center; }
+.bars .name { font-size: 12.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bars .name small { color: var(--ink-3); }
+#incr-bars .name { white-space: normal; line-height: 1.25; }
+.track { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.stack { display: flex; height: 16px; gap: 2px; min-width: 2px; }
+.stack span { display: block; height: 100%; }
+.stack span:first-child { border-radius: 4px 0 0 4px; }
+.stack span:last-child { border-radius: 0 4px 4px 0; }
+.stack span:only-child { border-radius: 4px; }
+.val { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+.hit { cursor: default; }
+.hit:hover .stack, .hit:focus .stack { filter: brightness(1.08); outline: 1px solid var(--ink-3); outline-offset: 1px; border-radius: 4px; }
+
+.sig { display: grid; grid-template-columns: minmax(130px, 190px) 1fr; gap: 3px 10px; align-items: center; }
+.sig .name { font-size: 12.5px; }
+.sig .tier { font-size: 10.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; margin-left: 4px; }
+.pair { display: grid; gap: 3px; padding: 4px 0; }
+.pair .bar { height: 10px; border-radius: 0 4px 4px 0; min-width: 2px; }
+.pair .row { display: flex; align-items: center; gap: 6px; }
+
+.incr { display: grid; grid-template-columns: 1fr 220px; gap: 16px; align-items: center; }
+.big { font-size: 34px; font-weight: 700; color: var(--navy); line-height: 1.1; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); font-weight: 600; padding: 8px; border-bottom: 1px solid var(--line); cursor: pointer; white-space: nowrap; user-select: none; }
+th.num, td.num { text-align: right; }
+th[aria-sort="descending"]::after { content: " ↓"; }
+th[aria-sort="ascending"]::after { content: " ↑"; }
+td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--surface-2); }
+tbody tr.sel { background: var(--flag-tint); }
+.table-wrap { overflow: auto; max-height: 460px; border-bottom: 1px solid var(--line); }
+thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.status { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 12px; white-space: nowrap; }
+.status svg { flex: none; }
+.s-hold { color: var(--hold); } .s-review { color: var(--review); } .s-ok { color: var(--ok); } .s-low { color: var(--ink-3); font-weight: 500; }
+.mini { display: inline-block; width: 56px; height: 6px; background: var(--chip); border-radius: 3px; vertical-align: middle; margin-right: 6px; overflow: hidden; }
+.mini b { display: block; height: 100%; background: var(--flag); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+
+.drill { margin-top: 12px; }
+.click { border-top: 1px solid var(--line); padding: 10px 0; }
+.click-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 12.5px; margin-bottom: 6px; }
+.tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11.5px; font-weight: 600; background: var(--chip); color: var(--ink-2); }
+.tag.f { background: var(--flag-tint); color: var(--accent); }
+.tag.o { background: var(--surface-2); color: var(--ok); border: 1px solid var(--line); }
+.journey { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.step { display: inline-flex; flex-direction: column; padding: 4px 8px; border-radius: 6px; background: var(--chip); font-size: 12px; max-width: 220px; }
+.step .h { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step .s { color: var(--ink-3); font-size: 11px; }
+.step.brand { background: var(--surface); border: 1px solid var(--clean); }
+.step.cart { background: var(--flag-tint); border: 1px solid var(--flag); }
+.step.click-step { background: var(--navy); color: var(--surface); font-weight: 600; }
+.step.click-step .s { color: var(--surface); opacity: .8; }
+.arrow { color: var(--ink-3); font-size: 12px; }
+.empty { color: var(--ink-3); padding: 12px 0; }
+
+.tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 4px 16px rgba(0,0,0,.12); border-radius: 8px; padding: 8px 10px; font-size: 12px; z-index: 10; display: none; max-width: 280px; }
+.tip b { font-size: 14px; }
+.tip .r { display: flex; align-items: center; gap: 6px; }
+.tip .r i { display: inline-block; width: 12px; height: 2px; }
+footer { margin-top: 20px; color: var(--ink-3); font-size: 12px; }
+footer p { margin: 4px 0; max-width: 900px; }
+
+@media (max-width: 980px) {
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid2 { grid-template-columns: 1fr; }
+  .incr { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .tiles { grid-template-columns: 1fr; }
+  h1 { font-size: 23px; }
+  .bars, .sig { grid-template-columns: 96px 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker">Partnerize · affiliate quality</div>
+      <h1>Publisher Risk Monitor</h1>
+      <p class="sub">Each affiliate click is checked for signs that the publisher took credit for a sale it did not drive.
+        US users of the browsing panel, <span id="date"></span>. Pick a brand and a look-back window; everything below recomputes.</p>
+    </div>
+    <button class="theme-btn" id="theme" type="button" aria-label="Toggle light or dark theme">◐ Theme</button>
+  </header>
+
+  <div class="controls">
+    <div class="ctl"><span class="lbl" id="lbl-brand">Brand</span><div class="seg" id="brand" role="group" aria-labelledby="lbl-brand"></div></div>
+    <div class="ctl"><span class="lbl" id="lbl-lb">Look-back for cart / on-site signals</span><div class="seg" id="lookback" role="group" aria-labelledby="lbl-lb"></div></div>
+    <div class="ctl"><label for="aov">Avg order ($)</label><input id="aov" type="number" min="1" step="1"></div>
+    <div class="ctl"><label for="comm">Commission (%)</label><input id="comm" type="number" min="0" max="100" step="0.5"></div>
+  </div>
+
+  <section class="tiles" id="tiles" aria-label="Key figures"></section>
+
+  <div class="grid2">
+    <section class="card">
+      <div class="card-head">
+        <div><h2 id="pub-chart-title">Where the affiliate orders go</h2><p class="note" id="pub-chart-note"></p></div>
+        <div class="legend"><span><i style="background:var(--clean)"></i>No strong signal</span><span><i style="background:var(--flag)"></i>Flagged</span></div>
+      </div>
+      <div class="bars" id="pub-bars"></div>
+    </section>
+    <section class="card">
+      <div class="card-head">
+        <div><h2>What the flags are</h2><p class="note">Each click counts once, under its first-ranked indicator.</p></div>
+        <div class="legend"><span><i style="background:var(--m-clicks)"></i>Share of clicks</span><span><i style="background:var(--m-orders)"></i>Share of orders</span></div>
+      </div>
+      <div class="sig" id="sig"></div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:12px">
+    <div class="incr">
+      <div>
+        <h2>Is a click fired at the cart incremental?</h2>
+        <p class="note" style="margin-bottom:10px">Walmart, US. Each shopper's stage is fixed at their first cart or checkout view, before any click; shoppers an affiliate brought to the cart are excluded. Share who order within 2 hours.</p>
+        <div class="bars" id="incr-bars"></div>
+      </div>
+      <div>
+        <div class="note">Shoppers who got a click</div>
+        <div class="big" id="incr-big"></div>
+        <div style="font-weight:600">orders, vs expected without the click</div>
+        <div class="note" id="incr-ci"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:12px">
+    <div class="card-head">
+      <div><h2>Publishers</h2><p class="note">Click a row to see that publisher's clicks and what the shopper did just before and after each one.</p></div>
+      <input type="search" id="q" placeholder="Filter publisher or source" aria-label="Filter publishers">
+    </div>
+    <div class="table-wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="card drill" id="drill" hidden>
+    <div class="card-head">
+      <div><h2 id="drill-title"></h2><p class="note" id="drill-note"></p></div>
+      <div class="seg" id="drill-filter" role="group" aria-label="Which clicks to show"></div>
+    </div>
+    <div id="drill-list"></div>
+  </section>
+
+  <footer>
+    <p><b>Status.</b> <span class="s-hold">Hold payouts</span>: any click without a landing, or ≥ 3 orders with half or more from flagged clicks.
+      <span class="s-review">Review</span>: ≥ 20% of clicks flagged, or any order from a flagged click.
+      <span class="s-ok">OK</span>: neither. Publishers with fewer than 10 clicks and no flagged click are marked low volume.</p>
+    <p><b>Strong indicators</b>: click without landing · in the brand's cart or checkout within the look-back · on the brand's site, untagged, within the look-back · publisher-bought search ad.
+      Medium: brand search or coupon / cash-back site in the 60 s before. Review: landings on 2+ other advertisers within ±2 min. Weak: no activity in the 30 min before.</p>
+    <p><b>US estimates</b> = panel count × the brand's scale factor (calibrated on Similarweb). Commission at risk = flagged orders × scale × average order × commission × 365.
+      Defaults: Walmart $112.50 and 2.5% (AOV $100–125, commission 1–4%); mattress brands $860 and 5% (Saatva AOV, commission 3–10%). One day of panel data: treat small counts as leads, not verdicts.</p>
+    <p>Source: github.com/Hagaygro/partnerize-assignment · built from the pipeline by dashboard/build_dashboard.py</p>
+  </footer>
+</div>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+
+// ---------- helpers ----------
+const $ = (s) => document.querySelector(s);
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v;
+    else if (k === "style") n.style.cssText = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== undefined && v !== false) n.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) if (c !== null && c !== undefined && c !== false) n.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return n;
+}
+const fmtInt = (v) => Math.round(v).toLocaleString("en-US");
+const fmtPct = (v, d = 0) => (isFinite(v) ? (v * 100).toFixed(d) + "%" : "—");
+function fmtK(v) {
+  if (!isFinite(v)) return "—";
+  if (v >= 1e6) return (v / 1e6).toFixed(1) + "M";
+  if (v >= 1e4) return Math.round(v / 1e3) + "K";
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + "K";
+  return String(Math.round(v));
+}
+const fmtUsd = (v) => (v > 0 ? "$" + fmtK(v) : "—");
+function fmtSecs(s) {
+  if (s < 60) return s + " s";
+  if (s < 3600) return (s / 60).toFixed(s < 600 ? 1 : 0) + " min";
+  return (s / 3600).toFixed(1) + " h";
+}
+
+// ---------- signals ----------
+const SIGNALS = [
+  { key: "nl", name: "Click without landing", tier: "strong", test: (c) => c.nl },
+  { key: "ck", name: "Injected at cart / checkout", tier: "strong", test: (c, L) => c.sc !== null && c.sc <= L },
+  { key: "os", name: "Already on the brand's site", tier: "strong", test: (c, L) => c.sb !== null && c.sb <= L },
+  { key: "ps", name: "Publisher-bought search ad", tier: "strong", test: (c) => c.ps },
+  { key: "bs", name: "Brand search just before", tier: "medium", test: (c) => c.bs },
+  { key: "cp", name: "Coupon / cash-back just before", tier: "medium", test: (c) => c.cp },
+  { key: "bu", name: "Multi-brand burst", tier: "review", test: (c) => c.bu },
+  { key: "nr", name: "No visible referrer", tier: "weak", test: (c) => c.nr },
+  { key: "none", name: "No indicator", tier: "", test: () => true },
+];
+function classify(c, L) {
+  for (const s of SIGNALS) if (s.test(c, L)) return s;
+}
+
+// ---------- state ----------
+const state = { brand: "Walmart", lookback: 1800, sortKey: "risk", sortDir: -1, q: "", pub: null, drillMode: "flagged", econ: {} };
+for (const b of DATA.brands) state.econ[b.brand] = { aov: b.aov, comm: b.commission };
+const hosts = DATA.hosts;
+const brandInfo = Object.fromEntries(DATA.brands.map((b) => [b.brand, b]));
+try { const t = localStorage.getItem("prm-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+
+// ---------- tooltip ----------
+const tip = $("#tip");
+function showTip(ev, rows) {
+  tip.replaceChildren(...rows);
+  tip.style.display = "block";
+  const r = ev.currentTarget.getBoundingClientRect();
+  const x = ev.clientX ?? r.left + r.width / 2, y = ev.clientY ?? r.top;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.min(window.innerWidth - w - 8, x + 12) + "px";
+  tip.style.top = (y + h + 20 > window.innerHeight ? y - h - 12 : y + 14) + "px";
+}
+const hideTip = () => (tip.style.display = "none");
+function tipRow(color, value, label) {
+  return el("div", { class: "r" }, el("i", { style: `background:${color}` }), el("b", {}, value), el("span", {}, label));
+}
+function bindTip(node, build) {
+  node.tabIndex = 0;
+  node.addEventListener("pointermove", (e) => showTip(e, build()));
+  node.addEventListener("pointerleave", hideTip);
+  node.addEventListener("focus", (e) => showTip(e, build()));
+  node.addEventListener("blur", hideTip);
+}
+
+// ---------- computation ----------
+function compute() {
+  const L = state.lookback;
+  const info = brandInfo[state.brand];
+  const econ = state.econ[state.brand];
+  const valuePerOrder = info.scale * econ.aov * (econ.comm / 100) * 365;   // $ / year per panel order
+  const clicks = DATA.clicks.filter((c) => c.b === state.brand).map((c) => {
+    const s = classify(c, L);
+    return { ...c, sig: s, strong: s.tier === "strong" };
+  });
+  const tot = { clicks: clicks.length, flagged: 0, orders: 0, flaggedOrders: 0 };
+  const pubs = new Map();
+  const sig = new Map(SIGNALS.map((s) => [s.key, { s, clicks: 0, orders: 0 }]));
+  for (const c of clicks) {
+    tot.flagged += c.strong; tot.orders += c.cv; tot.flaggedOrders += c.strong && c.cv;
+    const g = sig.get(c.sig.key); g.clicks++; g.orders += c.cv;
+    if (!pubs.has(c.p)) pubs.set(c.p, { p: c.p, n: c.n, clicks: 0, flagged: 0, orders: 0, flaggedOrders: 0, nl: 0, sigs: {}, from: {}, list: [] });
+    const p = pubs.get(c.p);
+    p.clicks++; p.flagged += c.strong; p.orders += c.cv; p.flaggedOrders += c.strong && c.cv; p.nl += c.nl;
+    if (c.strong) p.sigs[c.sig.name] = (p.sigs[c.sig.name] || 0) + 1;
+    if (c.ph !== null) p.from[hosts[c.ph]] = (p.from[hosts[c.ph]] || 0) + 1;
+    p.list.push(c);
+  }
+  for (const p of pubs.values()) {
+    p.flagShare = p.flagged / p.clicks;
+    p.orderFlagShare = p.orders ? p.flaggedOrders / p.orders : NaN;
+    p.risk = p.flaggedOrders * valuePerOrder;
+    p.topSig = Object.entries(p.sigs).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+    p.source = Object.entries(p.from).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+    if (p.nl > 0 || (p.orders >= 3 && p.flaggedOrders / p.orders >= 0.5)) p.status = "hold";
+    else if (p.flagShare >= 0.2 || p.flaggedOrders > 0) p.status = "review";
+    else p.status = p.clicks < 10 ? "low" : "ok";
+  }
+  tot.risk = tot.flaggedOrders * valuePerOrder;
+  return { info, econ, clicks, tot, pubs: [...pubs.values()], sig: [...sig.values()], valuePerOrder };
+}
+
+// ---------- render ----------
+function renderControls() {
+  const bs = $("#brand"); bs.replaceChildren();
+  for (const b of DATA.brands) {
+    bs.append(el("button", { type: "button", "aria-pressed": String(b.brand === state.brand),
+      onclick: () => { state.brand = b.brand; state.pub = null; render(); } }, b.brand + (b.client ? " ★" : "")));
+  }
+  const lb = $("#lookback"); lb.replaceChildren();
+  for (const [s, label] of [[120, "2 min"], [600, "10 min"], [1800, "30 min"]]) {
+    lb.append(el("button", { type: "button", "aria-pressed": String(s === state.lookback),
+      onclick: () => { state.lookback = s; render(); } }, label));
+  }
+  $("#aov").value = state.econ[state.brand].aov;
+  $("#comm").value = state.econ[state.brand].comm;
+}
+
+function renderTiles(m) {
+  const { tot, info } = m;
+  const t = $("#tiles"); t.replaceChildren();
+  const tile = (k, v, c, cls = "") => el("div", { class: "tile " + cls }, el("div", { class: "k" }, k), el("div", { class: "v" }, v), el("div", { class: "c" }, c));
+  t.append(
+    tile("Affiliate clicks (panel)", fmtInt(tot.clicks), `≈ ${fmtK(tot.clicks * info.scale)} US clicks a day`),
+    tile("Clicks flagged", fmtPct(tot.flagged / tot.clicks), `${fmtInt(tot.flagged)} with a strong indicator`),
+    tile("Affiliate orders (panel)", fmtInt(tot.orders), tot.orders ? `${fmtPct(tot.orders / tot.clicks, 2)} of clicks convert` : "No order followed a click this day"),
+    tile("Orders from flagged clicks", tot.orders ? fmtPct(tot.flaggedOrders / tot.orders) : "—",
+      tot.orders ? `${fmtInt(tot.flaggedOrders)} of ${fmtInt(tot.orders)} credited orders` : "Needs more days of data", tot.orders ? "alert" : ""),
+    tile("Commission on flagged orders", tot.risk ? fmtUsd(tot.risk) : "—",
+      tot.risk ? "a year, US estimate" : "No flagged orders in the panel", tot.risk ? "alert" : ""),
+  );
+}
+
+function renderPubChart(m) {
+  const useOrders = m.tot.orders > 0;
+  $("#pub-chart-title").textContent = useOrders ? "Where the affiliate orders go" : "Where the affiliate clicks go";
+  $("#pub-chart-note").textContent = useOrders
+    ? "Top publishers by credited orders, split by whether the click carried a strong indicator."
+    : "No order followed an affiliate click this day, so publishers are shown by clicks.";
+  const key = useOrders ? ["orders", "flaggedOrders"] : ["clicks", "flagged"];
+  const top = [...m.pubs].sort((a, b) => b[key[0]] - a[key[0]] || b.clicks - a.clicks).slice(0, 10);
+  const max = Math.max(1, ...top.map((p) => p[key[0]]));
+  const box = $("#pub-bars"); box.replaceChildren();
+  for (const p of top) {
+    const total = p[key[0]], flagged = p[key[1]], clean = total - flagged;
+    const width = (v) => `${(v / max) * 82}%`;
+    const stack = el("div", { class: "stack", style: `width:${width(total)}` });
+    if (clean) stack.append(el("span", { style: `flex:${clean};background:var(--clean)` }));
+    if (flagged) stack.append(el("span", { style: `flex:${flagged};background:var(--flag)` }));
+    const row = el("div", { class: "track hit" }, stack, el("span", { class: "val" }, `${fmtInt(total)}${flagged ? ` · ${fmtPct(flagged / total)} flagged` : ""}`));
+    bindTip(row, () => [el("div", { style: "font-weight:600;margin-bottom:4px" }, p.p),
+      tipRow("var(--flag)", fmtInt(flagged), useOrders ? "orders from flagged clicks" : "flagged clicks"),
+      tipRow("var(--clean)", fmtInt(clean), useOrders ? "orders, no strong signal" : "clicks, no strong signal"),
+      el("div", { class: "note", style: "margin-top:4px" }, `Arrives from: ${p.source}`)]);
+    row.addEventListener("click", () => selectPub(p.p));
+    box.append(el("div", { class: "name", title: p.p }, p.p, " ", el("small", {}, p.source !== "—" ? `· ${p.source}` : "")), row);
+  }
+  if (!top.length) box.append(el("div", { class: "empty" }, "No clicks."));
+}
+
+function renderSignals(m) {
+  const box = $("#sig"); box.replaceChildren();
+  const rows = m.sig.filter((g) => g.clicks > 0);
+  const max = Math.max(...rows.map((g) => Math.max(g.clicks / m.tot.clicks, m.tot.orders ? g.orders / m.tot.orders : 0)), 0.01);
+  for (const g of rows) {
+    const cs = g.clicks / m.tot.clicks, os = m.tot.orders ? g.orders / m.tot.orders : NaN;
+    const pair = el("div", { class: "pair hit" },
+      el("div", { class: "row" }, el("div", { class: "bar", style: `width:${(cs / max) * 75}%;background:var(--m-clicks)` }), el("span", { class: "val" }, fmtPct(cs, cs < 0.1 ? 1 : 0))),
+      el("div", { class: "row" }, el("div", { class: "bar", style: `width:${isFinite(os) ? (os / max) * 75 : 0}%;background:var(--m-orders)` }), el("span", { class: "val" }, isFinite(os) ? fmtPct(os, os < 0.1 && os > 0 ? 1 : 0) : "no orders")));
+    bindTip(pair, () => [el("div", { style: "font-weight:600;margin-bottom:4px" }, g.s.name),
+      tipRow("var(--m-clicks)", fmtInt(g.clicks), "clicks"),
+      tipRow("var(--m-orders)", fmtInt(g.orders), "orders"),
+      el("div", { class: "note", style: "margin-top:4px" }, `Conversion: ${fmtPct(g.orders / g.clicks, 1)}`)]);
+    box.append(el("div", { class: "name" }, g.s.name, g.s.tier ? el("span", { class: "tier" }, g.s.tier) : null), pair);
+  }
+}
+
+function renderIncrementality() {
+  const box = $("#incr-bars"); box.replaceChildren();
+  const rows = DATA.incrementality;
+  for (const stage of ["cart", "checkout"]) {
+    for (const r of rows.filter((x) => x.stage === stage).sort((a, b) => a.grp.startsWith("Affiliate") - b.grp.startsWith("Affiliate"))) {
+      const treated = r.grp.startsWith("Affiliate");
+      const v = +r.order_rate_pct;
+      const bar = el("div", { class: "track hit" },
+        el("div", { class: "stack", style: `width:${v * 0.9}%` }, el("span", { style: `flex:1;background:var(${treated ? "--flag" : "--clean"})` })),
+        el("span", { class: "val" }, `${v.toFixed(0)}%  (n = ${fmtInt(+r.users)})`));
+      bindTip(bar, () => [el("div", { style: "font-weight:600;margin-bottom:4px" }, r.grp),
+        tipRow(`var(${treated ? "--flag" : "--clean"})`, `${r.orders} of ${r.users}`, "ordered within 2 h")]);
+      box.append(el("div", { class: "name" }, stage === "cart" ? "Viewed the cart" : "Reached checkout", " ",
+        el("small", {}, treated ? "· click fired after" : "· no click")), bar);
+    }
+  }
+  const s = DATA.incrementality_summary;
+  $("#incr-big").textContent = `${s.observed_orders} vs ${s.expected_orders_without_click}`;
+  const maxIncr = Math.round(100 * (1 - 1 / +s.ratio_hi95));
+  $("#incr-ci").textContent = `${s.injected_users} shoppers · ratio ${s.observed_to_expected} (95% CI ${s.ratio_lo95}–${s.ratio_hi95}), so at most ~${maxIncr}% of these orders could be incremental.`;
+}
+
+const STATUS = {
+  hold: ["Hold payouts", "s-hold", "M8 1.5 14.5 13.5h-13z"],
+  review: ["Review", "s-review", "M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2z"],
+  ok: ["OK", "s-ok", "M3 8.5 6.5 12 13 4.5"],
+  low: ["Low volume", "s-low", "M3 8h10"],
+};
+function statusEl(st) {
+  const [label, cls, d] = STATUS[st];
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", "14"); svg.setAttribute("height", "14"); svg.setAttribute("viewBox", "0 0 16 16"); svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", d);
+  const filled = st === "hold" || st === "review";
+  path.setAttribute("fill", filled ? "currentColor" : "none");
+  path.setAttribute("stroke", "currentColor"); path.setAttribute("stroke-width", filled ? "0" : "2.2"); path.setAttribute("stroke-linecap", "round");
+  svg.append(path);
+  return el("span", { class: "status " + cls }, svg, label);
+}
+
+const COLS = [
+  { key: "status", label: "Status", sort: (p) => ({ hold: 3, review: 2, ok: 1, low: 0 })[p.status] * 1e12 + p.risk, cell: (p) => statusEl(p.status) },
+  { key: "p", label: "Publisher", sort: (p) => p.p, cell: (p) => el("span", { class: "mono" }, p.p) },
+  { key: "source", label: "Arrives from", sort: (p) => p.source, cell: (p) => p.source },
+  { key: "clicks", label: "Clicks", num: 1, sort: (p) => p.clicks, cell: (p) => fmtInt(p.clicks) },
+  { key: "flagShare", label: "Flagged", num: 1, sort: (p) => p.flagShare, cell: (p) => el("span", {}, el("span", { class: "mini" }, el("b", { style: `width:${p.flagShare * 100}%` })), fmtPct(p.flagShare)) },
+  { key: "orders", label: "Orders", num: 1, sort: (p) => p.orders, cell: (p) => fmtInt(p.orders) },
+  { key: "orderFlagShare", label: "Orders flagged", num: 1, sort: (p) => (isFinite(p.orderFlagShare) ? p.orderFlagShare : -1), cell: (p) => fmtPct(p.orderFlagShare) },
+  { key: "topSig", label: "Main signal", sort: (p) => p.topSig, cell: (p) => p.topSig },
+  { key: "risk", label: "Commission at risk / yr", num: 1, sort: (p) => p.risk, cell: (p) => fmtUsd(p.risk) },
+];
+
+function renderTable(m) {
+  const thead = $("#tbl thead"), tbody = $("#tbl tbody");
+  thead.replaceChildren(el("tr", {}, COLS.map((c) => el("th", {
+    class: c.num ? "num" : "", scope: "col", tabindex: "0",
+    "aria-sort": state.sortKey === c.key ? (state.sortDir < 0 ? "descending" : "ascending") : null,
+    onclick: () => sortBy(c.key), onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sortBy(c.key); } },
+  }, c.label))));
+  const col = COLS.find((c) => c.key === state.sortKey) || COLS[0];
+  const q = state.q.trim().toLowerCase();
+  const rows = m.pubs.filter((p) => !q || p.p.toLowerCase().includes(q) || p.source.toLowerCase().includes(q))
+    .sort((a, b) => {
+      const x = col.sort(a), y = col.sort(b);
+      const r = typeof x === "string" ? x.localeCompare(y) : x - y;
+      return (r || b.clicks - a.clicks) * state.sortDir;
+    });
+  tbody.replaceChildren(...rows.map((p) => el("tr", {
+    class: p.p === state.pub ? "sel" : "", tabindex: "0",
+    onclick: () => selectPub(p.p), onkeydown: (e) => { if (e.key === "Enter") selectPub(p.p); },
+  }, COLS.map((c) => el("td", { class: c.num ? "num" : "" }, c.cell(p))))));
+  if (!rows.length) tbody.append(el("tr", {}, el("td", { colspan: COLS.length, class: "empty" }, "No publisher matches.")));
+}
+function sortBy(key) {
+  if (state.sortKey === key) state.sortDir *= -1;
+  else { state.sortKey = key; state.sortDir = ["p", "source", "topSig"].includes(key) ? 1 : -1; }
+  render();
+}
+function selectPub(p) {
+  state.pub = state.pub === p ? null : p;
+  render();
+  if (state.pub) $("#drill").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function journeyEl(c) {
+  const brandDomain = { Walmart: "walmart.com", Saatva: "saatva.com", Nectar: "nectarsleep.com", Helix: "helixsleep.com", DreamCloud: "dreamcloudsleep.com" }[c.b];
+  const parts = [];
+  if (!c.j.length) parts.push(el("span", { class: "step" }, el("span", { class: "h" }, "No activity"), el("span", { class: "s" }, "in the 30 min before")));
+  const stepEl = ([h, sec, s], when) => {
+    const host = hosts[h];
+    const isBrand = host === brandDomain || host === "www." + brandDomain;
+    const isCart = isBrand && sec && /^\/(cart|checkout|checkouts|basket)$/i.test(sec);
+    return el("span", { class: "step" + (isCart ? " cart" : isBrand ? " brand" : "") },
+      el("span", { class: "h", title: host + (sec || "") }, host, sec ? el("b", {}, " " + sec) : null),
+      el("span", { class: "s" }, s === 0 ? "same second" : `${fmtSecs(s)} ${when}`));
+  };
+  for (const st of c.j) {
+    parts.push(stepEl(st, "before"));
+    parts.push(el("span", { class: "arrow", "aria-hidden": "true" }, "→"));
+  }
+  if (!c.j.length) parts.push(el("span", { class: "arrow", "aria-hidden": "true" }, "→"));
+  parts.push(el("span", { class: "step click-step" }, el("span", { class: "h" }, `${c.n} click`), el("span", { class: "s" }, c.nl ? "site never loads" : `lands on ${c.ls}`)));
+  // After the click: the next sites and the order, in time order.
+  const later = c.a.map((st) => ({ t: st[2], node: stepEl(st, "after") }));
+  if (c.cv) later.push({ t: c.to, node: el("span", { class: "step", style: "border:1px solid var(--ok)" },
+    el("span", { class: "h" }, "Order"), el("span", { class: "s" }, c.to === 0 ? "same second" : `${fmtSecs(c.to)} later`)) });
+  later.sort((x, y) => x.t - y.t);
+  for (const x of later) {
+    parts.push(el("span", { class: "arrow", "aria-hidden": "true" }, "→"));
+    parts.push(x.node);
+  }
+  return el("div", { class: "journey" }, parts);
+}
+
+function renderDrill(m) {
+  const box = $("#drill");
+  const p = m.pubs.find((x) => x.p === state.pub);
+  if (!p) { box.hidden = true; return; }
+  box.hidden = false;
+  $("#drill-title").textContent = `${p.p} · ${state.brand}`;
+  $("#drill-note").textContent = `${fmtInt(p.clicks)} clicks, ${fmtInt(p.flagged)} flagged, ${fmtInt(p.orders)} orders. Typical source: ${p.source}. Journeys show the sites visited in the 30 min before each click and the first two after it; on the brand's own site, the section of the site.`;
+  const f = $("#drill-filter"); f.replaceChildren();
+  for (const [k, label] of [["flagged", "Flagged"], ["orders", "With an order"], ["all", "All"]]) {
+    f.append(el("button", { type: "button", "aria-pressed": String(state.drillMode === k), onclick: () => { state.drillMode = k; render(); } }, label));
+  }
+  let list = p.list.filter((c) => state.drillMode === "all" || (state.drillMode === "flagged" ? c.strong : c.cv));
+  list.sort((a, b) => b.strong - a.strong || b.cv - a.cv || a.t.localeCompare(b.t));
+  const shown = list.slice(0, 40);
+  const out = $("#drill-list"); out.replaceChildren();
+  if (!shown.length) out.append(el("div", { class: "empty" }, "No clicks in this view."));
+  for (const c of shown) {
+    out.append(el("div", { class: "click" },
+      el("div", { class: "click-head" },
+        el("span", { class: "mono" }, `${c.t} UTC`),
+        el("span", { class: "tag" + (c.strong ? " f" : "") }, c.sig.name),
+        c.cv ? el("span", { class: "tag o" }, "Converted") : null,
+        c.cc ? el("span", { class: "tag" }, "Coupon in link") : null),
+      journeyEl(c)));
+  }
+  if (list.length > shown.length) out.append(el("p", { class: "note" }, `Showing ${shown.length} of ${fmtInt(list.length)} clicks.`));
+}
+
+// The view lives in the URL hash, so a link opens the same brand, window and publisher.
+function readHash() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (brandInfo[h.get("brand")]) state.brand = h.get("brand");
+  if (["120", "600", "1800"].includes(h.get("lookback"))) state.lookback = +h.get("lookback");
+  if (h.get("pub")) state.pub = h.get("pub");
+  if (["flagged", "orders", "all"].includes(h.get("clicks"))) state.drillMode = h.get("clicks");
+}
+function writeHash() {
+  const h = new URLSearchParams({ brand: state.brand, lookback: state.lookback });
+  if (state.pub) { h.set("pub", state.pub); h.set("clicks", state.drillMode); }
+  try { history.replaceState(null, "", "#" + h.toString()); } catch (e) {}
+}
+
+function render() {
+  writeHash();
+  const m = compute();
+  renderControls();
+  renderTiles(m);
+  renderPubChart(m);
+  renderSignals(m);
+  renderTable(m);
+  renderDrill(m);
+}
+
+// ---------- wiring ----------
+$("#date").textContent = new Date(DATA.date + "T00:00:00Z").toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+$("#aov").addEventListener("input", (e) => { const v = +e.target.value; if (v > 0) { state.econ[state.brand].aov = v; renderLight(); } });
+$("#comm").addEventListener("input", (e) => { const v = +e.target.value; if (v >= 0) { state.econ[state.brand].comm = v; renderLight(); } });
+$("#q").addEventListener("input", (e) => { state.q = e.target.value; renderTable(compute()); });
+$("#theme").addEventListener("click", () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  try { localStorage.setItem("prm-theme", root.dataset.theme); } catch (e) {}
+});
+function renderLight() { const m = compute(); renderTiles(m); renderTable(m); }
+renderIncrementality();
+readHash();
+render();
+</script>
+</body>
+</html>

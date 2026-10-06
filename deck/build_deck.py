@@ -3,7 +3,7 @@
 Usage:
     .venv/bin/python deck/build_deck.py        # -> deck/saatva_affiliate_analysis.pptx
 
-Nine slides plus three backup slides. Each slide carries one message, one chart or
+Ten slides plus three backup slides. Each slide carries one message, one chart or
 visual, and few words; the detail is in the speaker notes. The numbers come from
 outputs/*.csv; the case studies and external benchmarks are written into the text.
 
@@ -736,8 +736,8 @@ def slide_recommendations(prs, d):
             ("Reconcile clicks with saatva.com landings",
              "A click that never lands is proof, with no threshold to tune"),
             ("No overwrite once a cart exists",
-             "Plus extension stand-down and a PPC and trademark policy"),
-            ("Monitor six indicators per publisher",
+             "Cart-stage clicks add no orders (slide 7); plus extension stand-down, PPC policy"),
+            ("Monitor every publisher (built: next slide)",
              "Hold payouts on flagged orders; validate on reversals"),
         ]),
     ]
@@ -756,8 +756,41 @@ def slide_recommendations(prs, d):
               NAVY, size=15, color=WHITE, accent=P_ORANGE, margin=0.3)
 
 
+def slide_monitor(prs, d):
+    su = d["incr_sum"]
+    s = content_slide(prs, 10, "From analysis to monitoring", "The indicators, built into a publisher monitor", (
+        "The recommendations need a tool a partner manager can use every week, so the pipeline also builds one: "
+        "dashboard/publisher_risk_monitor.html, a single file that opens in any browser. It re-scores every affiliate "
+        "click under the chosen look-back window, so the 2-to-30-minute sensitivity is a click, not a footnote. It "
+        "ranks publishers by the commission paid on their flagged orders, with a Hold, Review or OK status, and the "
+        "average order and commission are inputs. Every number can be traced to the journey behind a click. The strip "
+        "at the bottom is one of them: a shopper browsed Walmart, reached checkout, and two seconds after a Bizrate "
+        "redirect an Impact click 'landed' on the order confirmation page, in the same second as the order. The "
+        "publisher, impact:150372, has 32 credited orders in the panel, 78% of them from flagged clicks. The same view "
+        "works for Saatva today; with Partnerize's own click and order logs instead of a one-day panel, the counts "
+        "behind each status would be complete."))
+    img = os.path.join(ROOT, "deck", "img")
+    ow = 6.3
+    s.shapes.add_picture(os.path.join(img, "dashboard_overview.png"), Inches(L), Inches(1.6), width=Inches(ow))
+    box(s, L, 1.6, ow, ow * 1590 / 2560, line=GRID)
+    tx, tw = L + ow + 0.4, R - (L + ow + 0.4)
+    items = [
+        ("Any look-back, one click", "Every click re-scored at 2, 10 or 30 minutes; the sensitivity test becomes a control"),
+        ("Ranked by money, with a status", "Hold, Review or OK per publisher, by commission on flagged orders; AOV and rate are inputs"),
+        ("Every flag has a journey", "The sites before and after each click, so a reviewer sees the evidence, not a score"),
+    ]
+    for j, (head, body) in enumerate(items):
+        y = 1.7 + j * 1.25
+        number_badge(s, tx, y, j + 1, P_ORANGE, d=0.36, size=12)
+        text(s, tx + 0.52, y - 0.02, tw - 0.52, 0.32, head, size=15, color=NAVY, bold=True)
+        text(s, tx + 0.52, y + 0.33, tw - 0.52, 0.75, body, size=12.5, color=MUTED, spacing=1.05)
+    text(s, L, 5.65, CW, 0.28, "One of impact:150372's 32 orders: the click \"lands\" on the order confirmation page",
+         size=12, color=MUTED, bold=True)
+    s.shapes.add_picture(os.path.join(img, "dashboard_journey.png"), Inches(L), Inches(5.97), width=Inches(CW * 0.85))
+
+
 def appendix_results(prs, d):
-    s = content_slide(prs, 10, "Backup", "Results by brand",
+    s = content_slide(prs, 11, "Backup", "Results by brand",
                       "Full results table. Conservative estimates use the Walmart-calibrated factor for the mattress "
                       "brands and the population ratio for Walmart.")
     c = d["comp"]
@@ -787,7 +820,7 @@ def appendix_results(prs, d):
 
 
 def appendix_data(prs, d):
-    s = content_slide(prs, 11, "Backup", "Data validation",
+    s = content_slide(prs, 12, "Backup", "Data validation",
                       "Each check, what it found, and how the pipeline handles it.")
     dq = d["dq"]
     dup = 100 * num(dq["duplicate_rows"]) / num(dq["rows"])
@@ -808,7 +841,7 @@ def appendix_data(prs, d):
 
 
 def appendix_indicators(prs, d):
-    s = content_slide(prs, 12, "Backup", "Hijacking indicators and Walmart outcomes",
+    s = content_slide(prs, 13, "Backup", "Hijacking indicators and Walmart outcomes",
                       "Each click counts once, under its first-ranked indicator, so the Walmart columns add up to "
                       "all 6,449 clicks. Strong indicators are highlighted.")
     sig = d["signal"]
@@ -879,7 +912,7 @@ def main():
     set_theme(prs)
     for build in (slide_title, slide_answer, slide_share, slide_volume, slide_method, slide_hijack, slide_incrementality,
                   slide_cases,
-                  slide_recommendations, appendix_results, appendix_data, appendix_indicators):
+                  slide_recommendations, slide_monitor, appendix_results, appendix_data, appendix_indicators):
         build(prs, d)
     register_notes_master(prs)
     prs.save(OUT)
