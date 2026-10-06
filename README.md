@@ -19,7 +19,7 @@ are per day, as panel counts × a scale factor calibrated on the brand's own aud
 | Nectar | Impact | 51 | 3.9% | 4 | 11.1k (3.0k – 28.5k) | 4.4k | 0 | 56 – 223 ³ |
 | Helix | Impact | 19 | 10.5% | 2 | 5.6k (0.6k – 20.1k) | 2.2k | 0 | 28 – 111 ³ |
 | DreamCloud | Impact | 27 | 7.4% | 2 | 5.6k (0.6k – 20.1k) | 2.2k | 0 | 28 – 111 ³ |
-| Walmart | Impact | 16,401 | 6.4% | 6,449 | 7.0M ⁴ | 3.0M | 112 (1.74%) | 122k |
+| Walmart | Impact | 16,401 | 6.4% | 6,449 | 7.0M ⁴ | 3.0M | 111 (1.72%) | 121k |
 
 ¹ Mattress brands scaled with the walmart.com-calibrated factor; Walmart with the population ratio.
 ² Five clicks that landed on saatva.com, plus one Partnerize click that never loaded the site
@@ -27,7 +27,7 @@ are per day, as panel counts × a scale factor calibrated on the brand's own aud
 ³ No mattress-brand order, registration or financing application followed an affiliate click
 that day. The range applies the mattress e-commerce conversion benchmark (0.5–2%) to the
 estimated clicks.
-⁴ Walmart averages 6.3 clicks per clicking user, because creator storefronts link to many products.
+⁴ Walmart averages 6.4 clicks per clicking user, because creator storefronts link to many products.
 The share of visits that start with an affiliate click (6.4%) is the more comparable measure.
 
 **External checks.** Similarweb ranks affiliate as Saatva's #1 traffic channel (23.7%), or about
@@ -45,12 +45,23 @@ lean the same way: 43% and 37% of visits come from paid search.
   * A publisher named as an *email* partner (`brandxemail`) delivered its click through a
     *Google ad* (`gad_source=1`) to `/sale`, with an auto-applied coupon.
 * **Where the volume allows it (Walmart, 6,449 clicks)**, the clicks with a strong signal are
-  13–23% of affiliate clicks but **52–79% of affiliate-attributed orders**. The range depends on
+  13–24% of affiliate clicks but **52–79% of affiliate-attributed orders**. The range depends on
   the look-back window (2–30 min; see `hijack_sensitivity`).
 * **Clicks fired after the buyer had already viewed the cart or checkout** (within 30 min)
   convert at **13%**, or 15% within 2 min, against 0.4% for clicks with no indicator. The median
-  time from click to order is **2.3 minutes**. 220 of them had a walmart.com page as the previous
+  time from click to order is **2.3 minutes**. 258 of them had a walmart.com page as the previous
   event, a median of 2 seconds earlier, with no publisher page in between: a silent redirect.
+* **Those clicks add no orders.** The obvious objection is that buyers in the cart convert anyway. It is
+  tested in `11_incrementality.sql`. Each US Walmart shopper's stage (first cart view, or first checkout
+  view) is fixed before any click, and shoppers an affiliate brought to the cart are excluded. Shoppers who then got
+  an affiliate click order at the same rate as those who did not: 34% vs 32% after the cart,
+  67% vs 76% after checkout. Across the 56 shoppers who got a click, **25 ordered; 25.7 would have without
+  it** (ratio 0.97, 95% CI 0.63–1.44, so at most ~31% of these orders could be incremental).
+* **Commission at risk.** Clicks fired at the cart carry half of Walmart's affiliate-attributed orders (~61k
+  US orders/day). At a $100–125 average order and 1–4% commission, that is **$22M–111M a year** paid for
+  sales that were already happening. Saatva's panel has no orders to measure its own share. Every 10% of
+  Saatva's affiliate orders that is hijacked costs about **$80k–1.05M a year** ($860 average order,
+  3–10% commission, 84–334 affiliate orders/day).
 
 ## Approach
 
@@ -60,6 +71,7 @@ lean the same way: 43% and 37% of visits come from paid search.
       │           (04) affiliate clicks: tagged landings + redirect hops   (05) visits & sources
       │           (06) orders, registrations, financing, funnel      (07) hijack indicators per click
       └──(02) data validation   (08) US users + scale factors ──▶ (09) result tables ──▶ (10) sensitivity
+                                                                                      └──▶ (11) incrementality, $ at risk
 ```
 
 * **Efficiency.** One pass over the Parquet files selects the users who touched any of the
@@ -142,9 +154,9 @@ The 30-minute look-back is tested at 10 and 2 minutes in `10_sensitivity.sql`:
 
 | Walmart, look-back | % of clicks flagged | % of affiliate orders from flagged clicks | Conversion rate: flagged vs other |
 |---|---:|---:|---|
-| 30 min | 23.4% | 78.6% | 5.8% vs 0.5% |
-| 10 min | 18.7% | 71.4% | 6.6% vs 0.6% |
-| 2 min | 13.2% | 51.8% | 6.8% vs 1.0% |
+| 30 min | 23.6% | 79.3% | 5.8% vs 0.5% |
+| 10 min | 18.8% | 72.1% | 6.6% vs 0.6% |
+| 2 min | 13.3% | 52.3% | 6.8% vs 1.0% |
 
 ## Repository layout
 
@@ -160,6 +172,7 @@ sql/                       # the analysis, run in order (each file documents its
   08_us_scaling.sql        # US users, external benchmarks, scale factors + validation
   09_summary.sql           # result tables
   10_sensitivity.sql       # hijack indicators under stricter look-back windows
+  11_incrementality.sql    # do clicks fired at the cart add orders? + commission at risk
 scripts/
   download_data.py         # parallel, resumable download of the archive
   extract_data.py          # extracts the Parquet files, verifies CRCs
@@ -194,6 +207,10 @@ it is too large for git.
   [dreamcloudsleep.com](https://www.similarweb.com/website/dreamcloudsleep.com/),
   [helixsleep.com](https://www.similarweb.com/website/helixsleep.com/)
 * US internet users: [DataReportal, Digital 2026](https://datareportal.com/reports/digital-2026-six-billion-internet-users)
+* Average order value, retrieved 2026-10-06: [walmart.com](https://gripsintelligence.com/insights/retailers/walmart.com)
+  ($100–125, Mar 2026) and [saatva.com](https://gripsintelligence.com/insights/retailers/saatva.com) ($850–875, Jun 2026), Grips Intelligence
+* Commission rates: Walmart affiliate program 1–4% by category ([Lasso summary](https://getlasso.co/affiliate/walmart/));
+  Saatva 3% base ([LinkClicky](https://linkclicky.com/affiliate-program/saatva/)), 10% partner program ([ACA](https://www.acatoday.org/practice-resources/saatva-mattress/saatva10percent/))
 * Mattress e-commerce conversion rates: [Grips Intelligence](https://gripsintelligence.com/insights/retailers/us-mattress.com)
   (us-mattress.com, mattressfirmep.com, mattressfirm.com retailer pages)
 

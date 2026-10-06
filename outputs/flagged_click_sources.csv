@@ -1,29 +1,25 @@
 brand,primary_signal,prev_host,clicks,converted_clicks,median_secs_since_prev
-Walmart,1 Injected at cart/checkout,walmart.com,220,24,2.0
-Walmart,1 Injected at cart/checkout,rd.bizrate.com,37,14,2.0
-Walmart,1 Injected at cart/checkout,mavely.app.link,36,0,1.0
-Walmart,1 Injected at cart/checkout,buff.ly,17,0,3.0
-Walmart,1 Injected at cart/checkout,walmrt.us,16,0,1.0
+Walmart,1 Injected at cart/checkout,walmart.com,258,24,2.0
+Walmart,1 Injected at cart/checkout,rd.bizrate.com,36,14,2.0
+Walmart,1 Injected at cart/checkout,walmrt.us,30,0,1.0
+Walmart,1 Injected at cart/checkout,mavelylife.com,18,0,1.5
+Walmart,1 Injected at cart/checkout,buff.ly,8,0,3.0
 Walmart,1 Injected at cart/checkout,capitaloneshopping.com,7,1,3.0
-Walmart,1 Injected at cart/checkout,mavelylife.com,7,0,1.0
-Walmart,1 Injected at cart/checkout,mavelyinfluencer.com,5,0,1.0
-Walmart,1 Injected at cart/checkout,4.html-load.cc,5,0,1.0
-Walmart,2 User already on brand site,rd.bizrate.com,394,11,7.0
-Walmart,2 User already on brand site,walmart.com,233,6,19.0
-Walmart,2 User already on brand site,mavely.app.link,151,0,4.0
-Walmart,2 User already on brand site,walmrt.us,81,0,1.0
-Walmart,2 User already on brand site,mavelyinfluencer.com,15,1,2.0
+Walmart,1 Injected at cart/checkout,mavely.app.link,6,0,1.5
+Walmart,2 User already on brand site,rd.bizrate.com,401,11,7.0
+Walmart,2 User already on brand site,walmart.com,238,6,16.0
+Walmart,2 User already on brand site,mavely.app.link,131,0,4.0
+Walmart,2 User already on brand site,walmrt.us,86,0,1.0
+Walmart,2 User already on brand site,mavelyinfluencer.com,19,1,3.0
+Walmart,2 User already on brand site,mavelylife.com,18,0,1.0
 Walmart,2 User already on brand site,mavlink.to,12,0,4.0
 Walmart,2 User already on brand site,capitaloneshopping.com,11,2,2.0
-Walmart,2 User already on brand site,buff.ly,10,0,3.0
-Walmart,2 User already on brand site,mavelylife.com,9,0,3.0
 Walmart,2 User already on brand site,us-go.kelkoogroup.net,8,2,4.0
+Walmart,2 User already on brand site,slickdeals.net,7,1,4.0
 Walmart,2 User already on brand site,rakuten.com,7,3,5.0
-Walmart,2 User already on brand site,go.sylikes.com,7,0,9.0
-Walmart,2 User already on brand site,rtings.com,5,0,32.0
+Walmart,2 User already on brand site,buff.ly,6,0,3.0
+Walmart,2 User already on brand site,rtings.com,6,0,26.5
 Walmart,2 User already on brand site,howl.link,5,0,3.0
-Walmart,2 User already on brand site,play.eko.com,5,0,4.0
-Walmart,2 User already on brand site,slickdeals.net,5,1,4.0
 Walmart,3 Publisher-bought search ad,rd.bizrate.com,24,0,3.5
-Walmart,5 Coupon/cash-back just before,slickdeals.net,27,0,4.0
+Walmart,5 Coupon/cash-back just before,slickdeals.net,28,0,4.0
 Walmart,5 Coupon/cash-back just before,capitaloneshopping.com,25,2,2.0

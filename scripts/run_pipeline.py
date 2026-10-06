@@ -22,7 +22,8 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 # Result tables written to outputs/*.csv
 EXPORTS = ["dq_profile", "dq_hourly", "scaling", "scaling_validation", "competitor_summary",
            "traffic_mix", "publisher_summary", "brand_funnel", "hijack_sensitivity",
-           "signal_summary", "flagged_click_sources"]
+           "signal_summary", "flagged_click_sources", "incrementality",
+           "incrementality_summary", "commission_at_risk"]
 
 
 def main():

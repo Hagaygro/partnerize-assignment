@@ -1,0 +1,2 @@
+injected_users,observed_orders,expected_orders_without_click,observed_to_expected,ratio_lo95,ratio_hi95,pct_orders_incremental
+56,25,25.7,0.97,0.63,1.44,-3.0

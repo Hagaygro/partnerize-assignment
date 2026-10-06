@@ -31,9 +31,9 @@ SELECT brand,
        min(created_time)                                       AS visit_start,
        max(created_time)                                       AS visit_end,
        count(*)                                                AS pageviews,
-       arg_min(url, created_time)                              AS entry_url,
+       arg_min(url, (created_time, url))                              AS entry_url,
        -- Affiliate parameters on the entry page, or appearing only after the visit started
-       regexp_matches(arg_min(url, created_time), affiliate_marker_re())          AS affiliate_entry,
+       regexp_matches(arg_min(url, (created_time, url)), affiliate_marker_re())          AS affiliate_entry,
        bool_or(regexp_matches(url, affiliate_marker_re()))                        AS affiliate_anywhere
 FROM numbered
 GROUP BY brand, user_id, visit_no;

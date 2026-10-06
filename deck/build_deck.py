@@ -3,7 +3,7 @@
 Usage:
     .venv/bin/python deck/build_deck.py        # -> deck/saatva_affiliate_analysis.pptx
 
-Eight slides plus three backup slides. Each slide carries one message, one chart or
+Nine slides plus three backup slides. Each slide carries one message, one chart or
 visual, and few words; the detail is in the speaker notes. The numbers come from
 outputs/*.csv; the case studies and external benchmarks are written into the text.
 
@@ -82,6 +82,9 @@ def load():
         "valid": {r["brand"]: r for r in rows("scaling_validation")},
         "scaling": rows("scaling")[0],
         "dq": rows("dq_profile")[0],
+        "incr": {(r["stage"], r["grp"].startswith("Affiliate")): r for r in rows("incrementality")},
+        "incr_sum": rows("incrementality_summary")[0],
+        "risk": {r["scope"]: r for r in rows("commission_at_risk")},
     }
 
 
@@ -372,7 +375,7 @@ def slide_answer(prs, d):
         "mattress brands, and Similarweb independently ranks affiliate as Saatva's #1 channel. Second, scaled to "
         "the US, that is about 16.7K affiliate clicks a day. The range is wide, 6.1K–36.4K, because it rests on six "
         "panel clicks; at category conversion rates it means roughly 84–334 orders a day. Third, where the data "
-        "has volume (Walmart), the 13–23% of clicks that carry a hijack signal take 52–79% of the "
+        "has volume (Walmart), the 13–24% of clicks that carry a hijack signal take 52–79% of the "
         "affiliate-credited orders, and Saatva's own clicks already show the same patterns. So the "
         "recommendations split in two: grow the channel, and stop paying for credit that was taken, not earned."))
     c = d["comp"]
@@ -457,7 +460,7 @@ def slide_volume(prs, d):
         "conservative estimate is 6.5K. The four intervals overlap, so one day can't rank the mattress brands by "
         "volume. No mattress order followed an affiliate click within the day, which is expected for a "
         "considered purchase, so orders use a 0.5–2% category conversion rate: 84–334 a day for Saatva. Walmart has "
-        "the volume to measure directly: 6,449 panel clicks, 1.74% converting, so about 7.0M clicks and 122K "
+        "the volume to measure directly: 6,449 panel clicks, 1.72% converting, so about 7.0M clicks and 121K "
         "converting clicks a day."))
     c = d["comp"]
     order = ["Saatva", "Nectar", "Helix", "DreamCloud"]
@@ -554,15 +557,15 @@ def slide_method(prs, d):
 
 def slide_hijack(prs, d):
     s = content_slide(prs, 6, "Attribution hijacking · Walmart, 6,449 clicks",
-                      "13–23% of clicks take 52–79% of affiliate orders", (
+                      "13–24% of clicks take 52–79% of affiliate orders", (
         "Walmart has the volume to test the indicators. Flagged clicks are clicks without a landing, clicks fired "
         "while the shopper was already in the cart or on the site, and clicks from a publisher-bought search ad. "
-        "They are 13–23% of clicks but take 52–79% of the affiliate-credited orders, depending on how strict the "
+        "They are 13–24% of clicks but take 52–79% of the affiliate-credited orders, depending on how strict the "
         "look-back window is, from 2 to 30 minutes. Clicks fired after the shopper had already viewed the cart "
         "convert at 13%, against 0.4% for clicks with no signal, and the order follows a median 2.3 minutes "
-        "later: these clicks close sales that were already happening. Mechanisms: 220 clicks fired from "
+        "later: these clicks close sales that were already happening. Mechanisms: 258 clicks fired from "
         "walmart.com itself a median 2 seconds after a walmart.com page, with no publisher page in between; "
-        "price-comparison redirects (rd.bizrate.com, 455 flagged clicks); and coupon and cash-back extensions "
+        "price-comparison redirects (rd.bizrate.com, 461 flagged clicks); and coupon and cash-back extensions "
         "(Capital One Shopping, Slickdeals, Rakuten)."))
     text(s, L, 1.65, 7, 0.26, "Share of Walmart affiliate clicks flagged, and the orders they take", size=12,
          color=MUTED, bold=True)
@@ -603,8 +606,73 @@ def slide_hijack(prs, d):
          "publisher-bought search ad.", size=12, color=MUTED)
 
 
+def slide_incrementality(prs, d):
+    su = d["incr_sum"]
+    risk = d["risk"]["Injected at cart/checkout (tested in this step)"]
+    saatva = d["risk"]["Per 10% of affiliate orders hijacked"]
+    max_incr = 100 * (1 - 1 / num(su["ratio_hi95"]))
+    s = content_slide(prs, 7, "Attribution hijacking · is the click incremental?",
+                      "A click fired at the cart adds no orders", (
+        "The obvious objection to slide 6: shoppers in the cart convert at a high rate anyway, so of course these "
+        "clicks convert. That is the point, and it can be tested. Take every US Walmart shopper at the moment they "
+        "first view the cart, and separately the checkout. The stage is fixed before any click, and shoppers an "
+        "affiliate brought to the cart are left out. Then compare those who got an affiliate click afterwards with "
+        "those who did not. At the cart, "
+        f"{d['incr'][('cart', True)]['order_rate_pct']}% vs {d['incr'][('cart', False)]['order_rate_pct']}% order "
+        "within two hours; at the checkout, "
+        f"{d['incr'][('checkout', True)]['order_rate_pct']}% vs {d['incr'][('checkout', False)]['order_rate_pct']}%. "
+        f"Across the {su['injected_users']} shoppers who got a click, {su['observed_orders']} ordered; "
+        f"{su['expected_orders_without_click']} would have without it. The interval is wide (ratio "
+        f"{su['ratio_lo95']}–{su['ratio_hi95']}), so at most about {max_incr:.0f}% of these orders could be "
+        "incremental, and the best estimate is none. The design favours the click, since a shopper who got one "
+        "stayed on the site at least until it fired. Clicks fired at the cart carry half of Walmart's "
+        "affiliate-credited orders. At an average order of $100–125 and 1–4% commission, that is "
+        f"${risk['commission_per_year_lo_musd']}M–{risk['commission_per_year_hi_musd']}M a year paid for sales that "
+        "were already happening. Saatva's panel has no orders to measure its share, so the Saatva figure is per 10% "
+        "of orders hijacked: about $860 per order and 3–10% commission."))
+    text(s, L, 1.65, 7, 0.26, "Walmart shoppers who order within 2 hours, by the stage already reached", size=12,
+         color=MUTED, bold=True)
+    legend(s, L, 1.98, [("No affiliate click", GREY_MARK), ("Affiliate click fired afterwards", P_ORANGE)])
+    x0, scale, y0, pitch, bh = 2.6, 0.048, 2.65, 1.55, 0.42
+    for i, (label, stage) in enumerate((("Viewed the cart", "cart"), ("Reached checkout", "checkout"))):
+        y = y0 + i * pitch
+        text(s, L, y + 0.3, 1.95, 0.3, label, size=14, color=INK)
+        for j, (treated, color) in enumerate(((False, GREY_MARK), (True, P_ORANGE))):
+            r = d["incr"][(stage, treated)]
+            val = num(r["order_rate_pct"])
+            by = y + j * (bh + 0.06)
+            hbar(s, x0, by, val * scale, bh, color)
+            text(s, x0 + val * scale + 0.1, by + 0.06, 1.75, 0.3,
+                 f"{val:.0f}%   (n = {int(num(r['users'])):,})", size=13, color=INK, bold=treated)
+    line(s, x0, y0 - 0.15, x0, y0 + pitch + 2 * bh + 0.25, INK, 0.75)
+    text(s, L, 5.95, 7.2, 0.6,
+         "Stage fixed at the first cart or checkout view, before any click. Shoppers an affiliate brought to the "
+         "cart are excluded.", size=12, color=MUTED, spacing=1.05)
+
+    tx, tw = 8.15, R - 8.15
+    box(s, tx, 1.65, tw, 2.35, fill=PANEL)
+    dot(s, tx + 0.3, 1.98, P_ORANGE)
+    text(s, tx + 0.55, 1.92, tw - 0.8, 0.28, f"{su['injected_users']} shoppers who got a click", size=12,
+         color=MUTED, bold=True)
+    text(s, tx + 0.3, 2.27, tw - 0.6, 0.75, f"{su['observed_orders']} vs {su['expected_orders_without_click']}",
+         size=40, color=NAVY, bold=True)
+    text(s, tx + 0.3, 3.05, tw - 0.6, 0.3, "orders, vs expected without the click", size=14, color=INK, bold=True)
+    text(s, tx + 0.3, 3.45, tw - 0.6, 0.3, f"At most ~{max_incr:.0f}% incremental (95% upper bound)", size=12.5,
+         color=MUTED)
+    box(s, tx, 4.2, tw, 2.55, fill=ORANGE_TINT)
+    text(s, tx + 0.3, 4.42, tw - 0.6, 0.28, "Commission on clicks fired at the cart", size=12, color=MUTED, bold=True)
+    text(s, tx + 0.3, 4.75, tw - 0.6, 0.7,
+         f"${float(risk['commission_per_year_lo_musd']):.0f}–{float(risk['commission_per_year_hi_musd']):.0f}M",
+         size=36, color=NAVY, bold=True)
+    text(s, tx + 0.3, 5.45, tw - 0.6, 0.3, "a year at Walmart (half its affiliate orders)", size=14, color=INK, bold=True)
+    text(s, tx + 0.3, 5.85, tw - 0.6, 0.8,
+         f"Saatva: ${float(saatva['commission_per_year_lo_musd']) * 1000:.0f}K–"
+         f"{saatva['commission_per_year_hi_musd']}M a year for every 10% of affiliate orders hijacked",
+         size=12.5, color=MUTED, spacing=1.05)
+
+
 def slide_cases(prs, d):
-    s = content_slide(prs, 7, "Attribution hijacking · Saatva", "The same patterns already appear at Saatva", (
+    s = content_slide(prs, 8, "Attribution hijacking · Saatva", "The same patterns already appear at Saatva", (
         "Three cases from Saatva's own clicks. One: a 'new tab' browser extension (newtab.club, via tatrck.com) "
         "fired a Partnerize click for Saatva (publisher camref 1011laqH9), but saatva.com never loaded; the user "
         "was on Sleep Number at the time. If they buy from Saatva within the cookie window, the extension is paid: "
@@ -645,7 +713,7 @@ def slide_cases(prs, d):
 
 
 def slide_recommendations(prs, d):
-    s = content_slide(prs, 8, "Recommendations", "Pay for the assist, not the last touch", (
+    s = content_slide(prs, 9, "Recommendations", "Pay for the assist, not the last touch", (
         "Grow: recruit the partner types the rivals already get traffic from: review sites like Mattress Clarity, "
         "buyer's guides like buyersguide.org, and HSA/FSA payment partners like Truemed. Give each publisher its "
         "own coupon code: today Mattress Nerd and TrafficPoint landings auto-apply the same code. Tier "
@@ -689,7 +757,7 @@ def slide_recommendations(prs, d):
 
 
 def appendix_results(prs, d):
-    s = content_slide(prs, 9, "Backup", "Results by brand",
+    s = content_slide(prs, 10, "Backup", "Results by brand",
                       "Full results table. Conservative estimates use the Walmart-calibrated factor for the mattress "
                       "brands and the population ratio for Walmart.")
     c = d["comp"]
@@ -719,7 +787,7 @@ def appendix_results(prs, d):
 
 
 def appendix_data(prs, d):
-    s = content_slide(prs, 10, "Backup", "Data validation",
+    s = content_slide(prs, 11, "Backup", "Data validation",
                       "Each check, what it found, and how the pipeline handles it.")
     dq = d["dq"]
     dup = 100 * num(dq["duplicate_rows"]) / num(dq["rows"])
@@ -740,7 +808,7 @@ def appendix_data(prs, d):
 
 
 def appendix_indicators(prs, d):
-    s = content_slide(prs, 11, "Backup", "Hijacking indicators and Walmart outcomes",
+    s = content_slide(prs, 12, "Backup", "Hijacking indicators and Walmart outcomes",
                       "Each click counts once, under its first-ranked indicator, so the Walmart columns add up to "
                       "all 6,449 clicks. Strong indicators are highlighted.")
     sig = d["signal"]
@@ -809,7 +877,8 @@ def main():
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(W), Inches(H)
     set_theme(prs)
-    for build in (slide_title, slide_answer, slide_share, slide_volume, slide_method, slide_hijack, slide_cases,
+    for build in (slide_title, slide_answer, slide_share, slide_volume, slide_method, slide_hijack, slide_incrementality,
+                  slide_cases,
                   slide_recommendations, appendix_results, appendix_data, appendix_indicators):
         build(prs, d)
     register_notes_master(prs)

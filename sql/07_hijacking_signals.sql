@@ -68,7 +68,7 @@ SELECT brand,
                                      AND regexp_matches(url, affiliate_marker_re()))     AS other_advertisers_2m,
        bool_or(secs_before BETWEEN 0 AND 60 AND regexp_matches(host, coupon_host_re()))  AS coupon_ext_60s,
        NOT bool_or(secs_before > 0)                                                      AS no_referrer,
-       arg_max(host, created_time) FILTER (WHERE secs_before > 0)                        AS prev_host,
+       arg_max(host, (created_time, host)) FILTER (WHERE secs_before > 0)                        AS prev_host,
        min(secs_before)            FILTER (WHERE secs_before > 0)                        AS secs_since_prev
 FROM window_events
 GROUP BY brand, click_key;
