@@ -109,6 +109,8 @@ A brand's own analytics stop at its own domain. The panel follows a person acros
 
 ## Publisher Risk Monitor (dashboard)
 
+**Live: <https://hagaygro.github.io/partnerize-assignment/dashboard/publisher_risk_monitor.html>**
+
 `dashboard/publisher_risk_monitor.html` is a single self-contained file: open it in any browser, with no server
 or network needed. It turns the hijacking indicators into a weekly working tool for a partner manager:
 
