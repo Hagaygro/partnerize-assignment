@@ -274,8 +274,7 @@ dashboard/
   publisher_risk_monitor.html   # the built dashboard: open in a browser
 deck/
   build_deck.py            # builds the presentation from outputs/*.csv
-  img/                     # dashboard screenshots used on backup slide 16
-  saatva_affiliate_analysis.pptx   # the deck (10 slides + 8 backup): upload to Google Drive, open with Google Slides
+  saatva_affiliate_analysis.pptx   # the deck (7 slides): upload to Google Drive, open with Google Slides
 data/                      # local only (git-ignored): archive, Parquet files, DuckDB database
 ```
 
