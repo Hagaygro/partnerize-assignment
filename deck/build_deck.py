@@ -331,7 +331,12 @@ def table(slide, x, y, widths, rows, heights, size=12, header_size=11, fills=Non
 
 
 # Slide frame -----------------------------------------------------------------------
+BACKUP = {"on": False}     # set by main() once the backup section starts
+
+
 def content_slide(prs, n, kicker, title, notes):
+    if BACKUP["on"] and not kicker.startswith("Backup"):
+        kicker = "Backup · " + kicker
     s = prs.slides.add_slide(prs.slide_layouts[6])
     text(s, L, 0.42, 10, 0.3, kicker.upper(), size=11, color=ORANGE_TEXT, bold=True, spc=150)
     text(s, L, 0.72, CW, 0.75, title, size=32, color=NAVY, font=TITLE_FONT, spacing=1.0)
@@ -475,14 +480,14 @@ def slide_share(prs, d):
 
 def slide_volume(prs, d):
     s = content_slide(prs, 4, "Results · US estimates", "Saatva: ~16.7K US affiliate clicks a day", (
-        "US estimate = panel clicks × a scale factor calibrated on the mattress audience (slide 6). Saatva comes "
+        "US estimate = panel clicks × a scale factor calibrated on the mattress audience (slide 5). Saatva comes "
         "to about 16.7K clicks a day, with a 95% interval of 6.1K–36.4K; with the Walmart-calibrated factor the "
         "conservative estimate is 6.5K. The four intervals overlap, so one day can't rank the mattress brands by "
         "volume. No mattress order followed an affiliate click within the day, which is expected for a "
         "considered purchase, so orders use a 0.5–2% category conversion rate: 84–334 a day for Saatva. Walmart has "
         "the volume to measure directly: 6,449 panel clicks, 1.72% converting, so about 7.0M recorded clicks and "
         "121K converting clicks a day. 71% of those clicks come from 58 panel people who click 13–15 times an "
-        "hour and almost never order (click flooding, slide 9); without them Walmart has about 2.0M clicks a day."))
+        "hour and almost never order (click flooding, backup slide 14); without them Walmart has about 2.0M clicks a day."))
     c = d["comp"]
     order = ["Saatva", "Nectar", "Helix", "DreamCloud"]
     x0, x1, vmax = 2.6, 8.9, 40000
@@ -535,7 +540,7 @@ def slide_journey(prs, d):
         "of Saatva's visitors also opened another brand, mostly Mattress Firm and Nectar. For Saatva's program, "
         "that makes comparison content (Saatva vs Nectar, best-mattress lists) the place to win the click, which is "
         "where the recruiting recommendation points. One day and a few hundred shoppers: read the shape, not the "
-        "rates. Review sites look rare here partly because the panel does not record search engines (slide 7)."))
+        "rates. Review sites look rare here partly because the panel does not record search engines (slide 13)."))
     text(s, L, 1.65, 6.5, 0.26, "US mattress shoppers in the panel, by the furthest step reached", size=12,
          color=MUTED, bold=True)
     steps = [(1, "Shopped for a mattress"), (3, "Visited a brand site"), (4, "Viewed a product page"),
@@ -674,7 +679,7 @@ def slide_stage(prs, d):
          f"{num(st['Already at checkout']['conversion_pct']):.0f}% vs {num(start['conversion_pct']):.1f}%", size=40,
          color=NAVY, bold=True)
     text(s, tx + 0.3, 3.05, tw - 0.6, 0.3, "at checkout vs starting the visit", size=14, color=INK, bold=True)
-    text(s, tx + 0.3, 3.45, tw - 0.6, 0.3, "and the next slide finds no sign it adds orders", size=12.5, color=MUTED)
+    text(s, tx + 0.3, 3.45, tw - 0.6, 0.3, "and slide 7 finds no sign it adds orders", size=12.5, color=MUTED)
     text(s, tx, 4.4, tw, 0.3, "What it means for a program", size=14, color=NAVY, bold=True)
     for j, item in enumerate(("Pay on the stage the click arrived at", "Lock credit once a cart exists",
                               "Report the funnel stage per publisher")):
@@ -749,7 +754,7 @@ def slide_hijack(prs, d):
                       f"{r0(s30['pct_orders_from_strong_excl_flood'])}% of affiliate orders", (
         "Walmart has the volume to test the indicators. Flagged clicks are clicks without a landing, clicks fired "
         "while the shopper was already in the cart or on the site, and clicks from a publisher-bought search ad. "
-        "Click-flooding clicks (next slide) are left out: they are most of the volume and almost never convert, "
+        "Click-flooding clicks (backup slide 14) are left out: they are most of the volume and almost never convert, "
         "so they would make the flagged share look smaller than it is. Among ordinary shoppers' clicks, flagged "
         "clicks are 26–41% of clicks but take 51–79% of the affiliate-credited orders, depending on how strict "
         "the look-back window is, from 2 to 30 minutes. Counted over all clicks, the same flags are 13–24%. Clicks fired after the shopper had already viewed the cart "
@@ -869,7 +874,7 @@ def slide_incrementality(prs, d):
     max_incr = 100 * (1 - 1 / num(su["ratio_hi95"]))
     s = content_slide(prs, 7, "Attribution hijacking · is the click incremental?",
                       "No sign that a click fired at the cart adds orders", (
-        "The obvious objection to slides 8 and 9: shoppers in the cart convert at a high rate anyway, so of course these "
+        "The obvious objection to slide 6: shoppers in the cart convert at a high rate anyway, so of course these "
         "clicks convert. That is the point, and it can be tested. Take every US Walmart shopper at the moment they "
         "first view the cart, and separately the checkout. The stage is fixed before any click, and shoppers an "
         "affiliate brought to the cart are left out. Then compare those who got an affiliate click afterwards with "
@@ -977,12 +982,12 @@ def slide_recommendations(prs, d):
         "exists. Protect: start by reconciling Partnerize click logs with saatva.com landings, because a click id "
         "that never lands is direct evidence. Then no commission overwrite after a cart exists, extension "
         "stand-down, a PPC and trademark policy, and weekly per-publisher monitoring of six indicators, with "
-        "payouts held on flagged orders. Next step: the same pipeline on 90 days of data and on Saatva's own "
-        "Partnerize logs, to size the impact."))
+        "payouts held on flagged orders. The first step needs no new data access beyond Saatva's own: match 30 "
+        "days of Partnerize clicks to saatva.com landings."))
     cols = [
         ("Grow the program", S_MARK, [
             ("Recruit review and HSA/FSA partners",
-             "Shoppers compare ~2 brands (slide 5); rivals get Mattress Clarity, buyersguide.org, Truemed"),
+             "Shoppers compare ~2 brands (slide 12); rivals get Mattress Clarity, buyersguide.org, Truemed"),
             ("Give each publisher its own coupon code",
              "One code is shared today, so a sale can't be traced to its partner"),
             ("Tier commissions by the value of the click",
@@ -992,8 +997,8 @@ def slide_recommendations(prs, d):
             ("Reconcile clicks with saatva.com landings",
              "A click that never lands is proof, with no threshold to tune"),
             ("No overwrite once a cart exists",
-             "Cart-stage clicks show no added orders (slide 10); plus extension stand-down, PPC policy"),
-            ("Monitor every publisher (built: next slide)",
+             "Cart-stage clicks show no added orders (slide 7); plus extension stand-down, PPC policy"),
+            ("Monitor every publisher (built: slide 16)",
              "Hold payouts on flagged orders; validate on reversals"),
         ]),
     ]
@@ -1008,8 +1013,54 @@ def slide_recommendations(prs, d):
             text(s, x + 0.65, y - 0.01, pw - 0.7, 0.32, title, size=16, color=INK, bold=True)
             text(s, x + 0.65, y + 0.37, pw - 0.7, 0.55, detail, size=13, color=MUTED, spacing=1.05)
     label_box(s, L, 5.98, CW, 0.68,
-              "**Next:** run the same pipeline on 90 days of data and on Saatva's Partnerize logs, to size the impact",
+              "**Start this week:** match 30 days of Partnerize clicks to saatva.com landings; no threshold to tune",
               NAVY, size=15, color=WHITE, accent=P_ORANGE, margin=0.3)
+
+
+def slide_assumptions(prs, d):
+    s = content_slide(prs, 0, "Assumptions and next steps", "What the numbers rest on, and how to firm them up", (
+        "Each estimate rests on a stated assumption, and each assumption has a next step that would replace it with "
+        "data. The panel and its scale factor carry the volumes; the same-day window and the benchmark conversion "
+        "carry the mattress orders; the hijacking indicators are behavioural proxies. The most valuable next step "
+        "is the cheapest: Saatva's own Partnerize click and order logs cover every click, not a one-day sample, and "
+        "matching them to saatva.com landings tests the strongest indicator without any threshold. With more time "
+        "I would also break the panel down by device, and build the competitor comparison from 90 days."))
+    cols = [
+        ("Assumptions", S_MARK, [
+            ("The panel stands for US browsing, per audience",
+             "Scaled by a factor calibrated on Similarweb (Aug 2026); US = under 20% of events on non-US domains"),
+            ("Season: August traffic stands in for 1 May",
+             "Google Trends puts mattress interest then at 1.5–2.8×, so volumes may be ~2× low"),
+            ("Orders: same day, last affiliate click",
+             "No mattress order seen; 0.5–2% category conversion applied, not observed"),
+            ("Hijacking: behavioural proxies",
+             "30-min look-back (tested at 2 and 10); flooding at 20+ clicks a day (tested at 10 and 50)"),
+            ("Money: public averages",
+             "Saatva $860 order, 3–10% commission; Walmart $100–125, 1–4%"),
+        ]),
+        ("Next steps", P_ORANGE, [
+            ("Saatva's own Partnerize logs",
+             "Every click, not a sample; match click ids to saatva.com landings first"),
+            ("30–90 days of data",
+             "Multi-day journeys for a considered purchase; enough clicks to rank the rivals"),
+            ("A holdout test on cart-stage clicks",
+             "No commission for a random half of publishers; measures incrementality directly"),
+            ("Validate the indicators",
+             "Against reversals and confirmed fraud; tune the thresholds"),
+            ("Same-period traffic figures",
+             "Paid Similarweb or Partnerize benchmarks for May, by device"),
+        ]),
+    ]
+    pw, gap = (CW - 0.5) / 2, 0.5
+    for i, (head, color, items) in enumerate(cols):
+        x = L + i * (pw + gap)
+        dot(s, x, 1.8, color, 0.2)
+        text(s, x + 0.35, 1.7, pw - 0.4, 0.38, head, size=19, color=NAVY, bold=True)
+        for j, (title, detail) in enumerate(items):
+            y = 2.35 + j * 0.9
+            number_badge(s, x, y, j + 1, color, d=0.34, size=12)
+            text(s, x + 0.55, y - 0.03, pw - 0.6, 0.3, title, size=15, color=INK, bold=True)
+            text(s, x + 0.55, y + 0.29, pw - 0.6, 0.5, detail, size=12, color=MUTED, spacing=1.05)
 
 
 def slide_monitor(prs, d):
@@ -1168,9 +1219,14 @@ def main():
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(W), Inches(H)
     set_theme(prs)
-    for build in (slide_title, slide_answer, slide_share, slide_volume, slide_journey, slide_method, slide_panel,
-                  slide_hijack, slide_flooding, slide_stage, slide_incrementality, slide_cases,
-                  slide_recommendations, slide_monitor, appendix_results, appendix_data, appendix_indicators):
+    main_deck = (slide_title, slide_answer, slide_share, slide_volume, slide_method, slide_hijack,
+                 slide_incrementality, slide_cases, slide_recommendations, slide_assumptions)
+    backup = (appendix_results, slide_journey, slide_panel, slide_flooding, slide_stage, slide_monitor,
+              appendix_data, appendix_indicators)
+    for build in main_deck:
+        build(prs, d)
+    BACKUP["on"] = True
+    for build in backup:
         build(prs, d)
     register_notes_master(prs)
     prs.save(OUT)
