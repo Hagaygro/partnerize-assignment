@@ -63,15 +63,16 @@ lean the same way: 43% and 37% of visits come from paid search.
   convert at **13%**, or 15% within 2 min, against 0.4% for clicks with no indicator. The median
   time from click to order is **2.3 minutes**. 258 of them had a walmart.com page as the previous
   event, a median of 2 seconds earlier, with no publisher page in between: a silent redirect.
-* **Those clicks add no orders.** The obvious objection is that buyers in the cart convert anyway. It is
+* **No sign those clicks add orders.** The obvious objection is that buyers in the cart convert anyway. It is
   tested in `11_incrementality.sql`. Each US Walmart shopper's stage (first cart view, or first checkout
   view) is fixed before any click, and shoppers an affiliate brought to the cart are excluded. Shoppers who then got
   an affiliate click order at the same rate as those who did not: 34% vs 32% after the cart,
   67% vs 76% after checkout. Across the 56 shoppers who got a click, **25 ordered; 25.7 would have without
-  it** (ratio 0.97, 95% CI 0.63–1.44, so at most ~31% of these orders could be incremental).
+  it** (ratio 0.97, 95% CI 0.63–1.44, so at most ~31% of these orders could be incremental). With 56
+  shoppers this is a strong lead, not proof; a holdout test on Saatva's own traffic would settle it.
 * **Commission at risk.** Clicks fired at the cart carry half of Walmart's affiliate-attributed orders (~61k
   US orders/day). At a $100–125 average order and 1–4% commission, that is **$22M–111M a year** paid for
-  sales that were already happening. Saatva's panel has no orders to measure its own share. Every 10% of
+  sales that, on this evidence, were happening anyway. Saatva's panel has no orders to measure its own share. Every 10% of
   Saatva's affiliate orders that is hijacked costs about **$80k–1.05M a year** ($860 average order,
   3–10% commission, 84–334 affiliate orders/day).
 
@@ -104,7 +105,7 @@ A brand's own analytics stop at its own domain. The panel follows a person acros
   affiliate program wins or loses the shopper.
 * **Where the affiliate click enters the funnel** (Walmart): 78% of clicks start the visit but carry 31% of
   the credited orders (0.7% conversion). Clicks that fire after the cart or at checkout are **3% of clicks and
-  42% of orders** (18–31% conversion), and `11_incrementality.sql` shows they add no orders.
+  42% of orders** (18–31% conversion), and `11_incrementality.sql` finds no sign that they add orders.
 
 ## Publisher Risk Monitor (dashboard)
 
@@ -184,7 +185,8 @@ with public traffic figures: its true daily US visits ÷ the panel's US visits t
   * Walmart: **F_retail = 1,089**.
   * The mattress brands: **F_mattress = 2,784**, pooled over Saatva, Nectar and DreamCloud (103
     panel visits → 287k Similarweb US visits/day). Helix has no public visit figure. Checked one
-    brand at a time, F_mattress reproduces each brand's Similarweb traffic at 0.89–1.27×.
+    brand at a time, F_mattress fits each brand's Similarweb traffic at 0.89–1.27×. The factor is
+    calibrated on these same figures, so this is a fit check, not an independent validation.
 * **Alternatives** are reported as the conservative estimate: F_retail for the mattress brands,
   and the population ratio for Walmart (324M US internet users ÷ 694k US panel users = 467).
 * **Seasonality (`12_seasonality.sql`).** Similarweb's latest public month is August; the panel day is

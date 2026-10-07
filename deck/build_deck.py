@@ -381,11 +381,13 @@ def stat_tile(s, x, y, w, h, kicker, mark, value, label, context, value_size=54)
 
 
 def slide_answer(prs, d):
-    s = content_slide(prs, 2, "The answer", "Affiliate is Saatva's edge; quality is the next lever", (
-        "Three numbers. First, 16% of Saatva's visits start with an affiliate click, against 4–11% for the other "
-        "mattress brands, and Similarweb independently ranks affiliate as Saatva's #1 channel. Second, scaled to "
+    s = content_slide(prs, 2, "The answer", "Affiliate is Saatva's #1 channel; quality is the next lever", (
+        "Three numbers. First, Similarweb ranks affiliate as Saatva's #1 channel (23.7% of traffic), and the panel "
+        "points the same way: 16% of Saatva's visits start with an affiliate click, against 4–11% for the other "
+        "mattress brands. That is 4 of 25 visits, so the panel alone cannot separate Saatva from its rivals; the "
+        "external source carries the claim. Second, scaled to "
         "the US, that is about 16.7K affiliate clicks a day. The range is wide, 6.1K–36.4K, because it rests on six "
-        "panel clicks; at category conversion rates it means roughly 84–334 orders a day. Third, where the data "
+        "panel clicks. No mattress order followed an affiliate click in the panel day, so orders are an assumption, not a finding: at a 0.5–2% category conversion rate, roughly 84–334 a day. Third, where the data "
         "has volume (Walmart), the clicks that carry a hijack signal take 51–79% of the affiliate-credited "
         "orders, though they are only 26–41% of ordinary shoppers' clicks; most of the remaining click volume "
         "is click flooding by a few dozen people. Saatva's own clicks already show the same hijacking patterns. So the "
@@ -396,10 +398,11 @@ def slide_answer(prs, d):
     s30, s2 = d["sens"][("Walmart", "30 min (base)")], d["sens"][("Walmart", "2 min")]
     tiles = [
         ("Saatva · traffic share", S_MARK, f"{r0(sa['pct_visits_from_affiliate'])}%",
-         "of visits start with an affiliate click", f"Rivals: {r0(min(rivals))}–{r0(max(rivals))}%"),
+         "of visits start with an affiliate click", f"Rivals: {r0(min(rivals))}–{r0(max(rivals))}%  ·  Similarweb: #1"),
         ("Saatva · US volume", S_MARK, "~" + k(sa["est_us_affiliate_clicks"]), "affiliate clicks a day",
          f"Range {k(sa['est_us_affiliate_clicks_lo95'])}–{k(sa['est_us_affiliate_clicks_hi95'])}  ·  "
-         f"{k(sa['est_us_converted_clicks_benchmark_lo'])}–{k(sa['est_us_converted_clicks_benchmark_hi'])} orders a day"),
+         f"{k(sa['est_us_converted_clicks_benchmark_lo'])}–{k(sa['est_us_converted_clicks_benchmark_hi'])} orders a day, "
+         f"assumed"),
         ("Walmart · hijacking", P_ORANGE,
          f"{r0(s2['pct_orders_from_strong_excl_flood'])}–{r0(s30['pct_orders_from_strong_excl_flood'])}%",
          "of affiliate orders go to flagged clicks",
@@ -427,12 +430,13 @@ def slide_answer(prs, d):
 
 
 def slide_share(prs, d):
-    s = content_slide(prs, 3, "Results · traffic mix", "Affiliate drives 16% of Saatva's visits, the top share", (
+    s = content_slide(prs, 3, "Results · traffic mix", "Saatva leans on affiliate more than its rivals", (
         "The share of visits that start with an affiliate click is the most robust comparison, because it doesn't "
         "depend on scaling: Saatva 16%, Helix 10.5%, DreamCloud 7.4%, Nectar 3.9%. Nectar and DreamCloud lean "
         "on paid search instead, 43% and 37% of their visits. Similarweb agrees independently: affiliate is the "
         "#1 channel for Saatva (23.7% of traffic) and Helix (21.0%), paid search for Nectar and DreamCloud. "
-        "Caveat: one day gives 19–51 visits per mattress brand, so read the order, not the decimals."))
+        "Caveat: one day gives 19–51 visits per mattress brand. Saatva's 16% is 4 of 25 visits, with a 95% interval "
+        "of 6–35% that overlaps every rival, so the panel shows the direction and Similarweb confirms it."))
     c, mix = d["comp"], d["mix"]
     rows = [("Saatva", S_MARK, ("Affiliate · 23.7%", BLUE_TINT, P_DEEP)),
             ("Helix", GREY_MARK, ("Affiliate · 21.0%", BLUE_TINT, P_DEEP)),
@@ -449,7 +453,8 @@ def slide_share(prs, d):
         visits = sum(mix[b].values())
         client = b == "Saatva"
         text(s, L, y - 0.05, 1.9, 0.3, b, size=16, color=INK, bold=client)
-        text(s, L, y + 0.25, 1.9, 0.25, "retail benchmark" if b == "Walmart" else f"{visits} visits",
+        aff = round(share * visits / 100)
+        text(s, L, y + 0.25, 1.9, 0.25, "retail benchmark" if b == "Walmart" else f"{aff} of {visits} visits",
              size=11, color=MUTED)
         hbar(s, x0, y, share * scale, bh, color)
         text(s, x0 + share * scale + 0.12, y + 0.01, 1.0, 0.3, f"{share:.1f}%", size=15, color=INK,
@@ -463,7 +468,8 @@ def slide_share(prs, d):
     text(s, L, 6.4, CW, 0.3,
          f"US panel visits, 1 May 2026. Nectar and DreamCloud lean on paid search: "
          f"{100 * nectar['Paid search'] / sum(nectar.values()):.0f}% and "
-         f"{100 * dream['Paid search'] / sum(dream.values()):.0f}% of their visits.",
+         f"{100 * dream['Paid search'] / sum(dream.values()):.0f}% of their visits. Small counts: the 95% intervals "
+         f"overlap (Saatva 6–35%), so the ranking rests on Similarweb.",
          size=12, color=MUTED)
 
 
@@ -490,7 +496,7 @@ def slide_volume(prs, d):
         line(s, gx, top, gx, bottom, INK if t == 0 else GRID, 0.75)
         text(s, gx - 0.4, bottom + 0.08, 0.8, 0.25, f"{t // 1000}K" if t else "0", size=11, color=MUTED,
              align="c")
-    text(s, 9.55, 1.62, 3.2, 0.26, "Orders a day (est.)", size=12, color=MUTED, bold=True)
+    text(s, 9.55, 1.62, 3.2, 0.26, "Orders a day (assumed)", size=12, color=MUTED, bold=True)
     for i, b in enumerate(order):
         r = c[b]
         y = y0 + i * pitch
@@ -506,7 +512,8 @@ def slide_volume(prs, d):
         text(s, 9.55, y - 0.17, 3.2, 0.32,
              f"{k(r['est_us_converted_clicks_benchmark_lo'])}–{k(r['est_us_converted_clicks_benchmark_hi'])}",
              size=16, color=INK, bold=client)
-    text(s, 9.55, bottom + 0.08, 3.2, 0.5, "At a 0.5–2% category conversion rate", size=11, color=MUTED)
+    text(s, 9.55, bottom + 0.08, 3.2, 0.5, "Not observed: 0.5–2% category conversion applied to the clicks",
+         size=11, color=MUTED)
     wm = c["Walmart"]
     text(s, L, 6.3, CW, 0.5,
          f"The intervals overlap: one day can't rank the mattress brands by volume.  Walmart, for scale: "
@@ -667,7 +674,7 @@ def slide_stage(prs, d):
          f"{num(st['Already at checkout']['conversion_pct']):.0f}% vs {num(start['conversion_pct']):.1f}%", size=40,
          color=NAVY, bold=True)
     text(s, tx + 0.3, 3.05, tw - 0.6, 0.3, "at checkout vs starting the visit", size=14, color=INK, bold=True)
-    text(s, tx + 0.3, 3.45, tw - 0.6, 0.3, "and the next slide shows the click adds no orders", size=12.5, color=MUTED)
+    text(s, tx + 0.3, 3.45, tw - 0.6, 0.3, "and the next slide finds no sign it adds orders", size=12.5, color=MUTED)
     text(s, tx, 4.4, tw, 0.3, "What it means for a program", size=14, color=NAVY, bold=True)
     for j, item in enumerate(("Pay on the stage the click arrived at", "Lock credit once a cart exists",
                               "Report the funnel stage per publisher")):
@@ -684,7 +691,8 @@ def slide_method(prs, d):
         "touched any of the five brands, so everything runs on 3.4% of the data, in about 30 seconds. "
         "Scaling: a factor calibrated on walmart.com recovers only 35–50% of the mattress sites' Similarweb "
         "traffic, because the panel under-covers that audience. The mattress brands therefore use a factor "
-        "calibrated on the mattress sites themselves, which reproduces each brand within 0.89–1.27×. Caveat: "
+        "calibrated on the mattress sites themselves. It fits each of them within 0.89–1.27×; that is a fit check on "
+        "the same figures, not an independent test. Caveat: "
         "Similarweb's latest public month is August, while the panel day is 1 May. Google Trends puts mattress "
         "search interest around 1 May at 1.5–2.8× August, so moved to that day the mattress estimates roughly "
         "double (Saatva about 33K clicks a day). The headline keeps the August factor as the lower estimate."))
@@ -730,7 +738,7 @@ def slide_method(prs, d):
     text(s, ref + 0.08, y0 - 0.4, 2.0, 0.25, "1.0 = Similarweb", size=11, color=NAVY, bold=True)
     text(s, 9.9, 4.95, R - 9.9, 1.7, [
         ("Walmart's factor under-counts the mattress sites **2–3×**.", {"after": 8}),
-        "The mattress factor matches each site within **0.89–1.27×**."], size=13, color=INK, spacing=1.1)
+        "The mattress factor fits each site within **0.89–1.27×** (calibrated on the same sites, so a fit check)."], size=13, color=INK, spacing=1.1)
 
 
 def slide_hijack(prs, d):
@@ -746,7 +754,7 @@ def slide_hijack(prs, d):
         "clicks are 26–41% of clicks but take 51–79% of the affiliate-credited orders, depending on how strict "
         "the look-back window is, from 2 to 30 minutes. Counted over all clicks, the same flags are 13–24%. Clicks fired after the shopper had already viewed the cart "
         "convert at 13%, against 0.4% for clicks with no signal, and the order follows a median 2.3 minutes "
-        "later: these clicks close sales that were already happening. Mechanisms: 258 clicks fired from "
+        "later: these clicks look like they close sales that were already happening. Mechanisms: 258 clicks fired from "
         "walmart.com itself a median 2 seconds after a walmart.com page, with no publisher page in between; "
         "price-comparison redirects (rd.bizrate.com, 461 flagged clicks); and coupon and cash-back extensions "
         "(Capital One Shopping, Slickdeals, Rakuten)."))
@@ -860,7 +868,7 @@ def slide_incrementality(prs, d):
     saatva = d["risk"]["Per 10% of affiliate orders hijacked"]
     max_incr = 100 * (1 - 1 / num(su["ratio_hi95"]))
     s = content_slide(prs, 7, "Attribution hijacking · is the click incremental?",
-                      "A click fired at the cart adds no orders", (
+                      "No sign that a click fired at the cart adds orders", (
         "The obvious objection to slides 8 and 9: shoppers in the cart convert at a high rate anyway, so of course these "
         "clicks convert. That is the point, and it can be tested. Take every US Walmart shopper at the moment they "
         "first view the cart, and separately the checkout. The stage is fixed before any click, and shoppers an "
@@ -875,8 +883,8 @@ def slide_incrementality(prs, d):
         "incremental, and the best estimate is none. The design favours the click, since a shopper who got one "
         "stayed on the site at least until it fired. Clicks fired at the cart carry half of Walmart's "
         "affiliate-credited orders. At an average order of $100–125 and 1–4% commission, that is "
-        f"${risk['commission_per_year_lo_musd']}M–{risk['commission_per_year_hi_musd']}M a year paid for sales that "
-        "were already happening. Saatva's panel has no orders to measure its share, so the Saatva figure is per 10% "
+        f"${risk['commission_per_year_lo_musd']}M–{risk['commission_per_year_hi_musd']}M a year paid for sales that, "
+        "on this evidence, were happening anyway; with 56 shoppers that is a strong lead, not proof. Saatva's panel has no orders to measure its share, so the Saatva figure is per 10% "
         "of orders hijacked: about $860 per order and 3–10% commission."))
     text(s, L, 1.65, 7, 0.26, "Walmart shoppers who order within 2 hours, by the stage already reached", size=12,
          color=MUTED, bold=True)
@@ -912,7 +920,7 @@ def slide_incrementality(prs, d):
     text(s, tx + 0.3, 4.75, tw - 0.6, 0.7,
          f"${float(risk['commission_per_year_lo_musd']):.0f}–{float(risk['commission_per_year_hi_musd']):.0f}M",
          size=36, color=NAVY, bold=True)
-    text(s, tx + 0.3, 5.45, tw - 0.6, 0.3, "a year at Walmart (half its affiliate orders)", size=14, color=INK, bold=True)
+    text(s, tx + 0.3, 5.45, tw - 0.6, 0.3, "a year at Walmart, if they add no orders", size=14, color=INK, bold=True)
     text(s, tx + 0.3, 5.85, tw - 0.6, 0.8,
          f"Saatva: ${float(saatva['commission_per_year_lo_musd']) * 1000:.0f}K–"
          f"{saatva['commission_per_year_hi_musd']}M a year for every 10% of affiliate orders hijacked",
@@ -984,7 +992,7 @@ def slide_recommendations(prs, d):
             ("Reconcile clicks with saatva.com landings",
              "A click that never lands is proof, with no threshold to tune"),
             ("No overwrite once a cart exists",
-             "Cart-stage clicks add no orders (slide 10); plus extension stand-down, PPC policy"),
+             "Cart-stage clicks show no added orders (slide 10); plus extension stand-down, PPC policy"),
             ("Monitor every publisher (built: next slide)",
              "Hold payouts on flagged orders; validate on reversals"),
         ]),
