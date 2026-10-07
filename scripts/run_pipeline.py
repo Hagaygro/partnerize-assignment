@@ -25,7 +25,8 @@ EXPORTS = ["dq_profile", "dq_hourly", "scaling", "scaling_validation", "competit
            "signal_summary", "flagged_click_sources", "incrementality",
            "incrementality_summary", "commission_at_risk", "seasonal_scaling",
            "panel_profile", "panel_coverage", "hijack_by_segment", "hijack_reweighted", "category_funnel",
-           "brand_funnel_cat", "cross_shopping", "journey_order", "click_funnel_stage"]
+           "brand_funnel_cat", "cross_shopping", "journey_order", "click_funnel_stage",
+           "click_flood_behaviour", "click_flooding", "click_flood_sources"]
 
 
 def main():

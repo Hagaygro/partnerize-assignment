@@ -14,6 +14,12 @@ look-back window), and the user's journey from 30 minutes before the click to
 The journey keeps the site visited and, on the brand's own site only, the first
 segment of the URL path (/cart, /checkout, /ip …). No user ids, query strings or
 full URLs are exported.
+
+A rare site could single a person out, so a site is named only if at least
+MIN_SITE_USERS of the panel's brand shoppers visited it that day, or it is a brand
+site, a mattress brand or review site, or affiliate-network infrastructure (the
+evidence a reviewer needs). Every
+other site, and any adult site however common, shows as "other site".
 """
 import json
 import os
@@ -29,6 +35,19 @@ OUT = os.path.join(ROOT, "dashboard", "publisher_risk_monitor.html")
 
 JOURNEY_STEPS = 6   # sites shown before each click
 AFTER_STEPS = 2     # and after it
+
+MIN_SITE_USERS = 20  # people who visited a site that day before it is named in a journey
+OTHER_SITE = "other site"
+# Affiliate-network click and redirect domains (as in sql/04): always named.
+NETWORK_HOST_RE = re.compile(
+    r"(^|\.)(prf\.hn|pntra\.com|pntrs\.com|pntrac\.com|gopjn\.com|pjtra\.com|pjatr\.com|sjv\.io|pxf\.io|"
+    r"7eer\.net|evyy\.net|ojrq\.net|xuok\.net|vxf\.io|mlfo\.net|anrdoezrs\.net|jdoqocy\.com|tkqlhce\.com|"
+    r"dpbolvw\.net|kqzyfj\.com|qksrv\.net|linksynergy\.com|awin1\.com|shareasale\.com|avantlink\.com|"
+    r"flexlinkspro\.com)$|^goto\.walmart\.com$")
+ADULT_HOST_RE = re.compile(
+    r"porn|xxx|sex|nude|adult|shemale|ladyboy|tranny|escort|cam4|chaturbate|onlyfans|xvideos|xhamster|hentai|"
+    r"milf|nsfw|fetish|erotic|redtube|youporn|brazzers|spankbang|rule34|eporner|motherless|stripchat|"
+    r"bongacams|livejasmin|myfreecams|fapello", re.I)
 
 # Defaults for the commission inputs: public sources, listed in README and sql/11.
 ECONOMICS = {
@@ -107,8 +126,24 @@ def main():
         SELECT brand, click_key, host, section, secs_before, before
         FROM steps
         WHERE k <= CASE WHEN before THEN {JOURNEY_STEPS} ELSE {AFTER_STEPS} END
-        ORDER BY brand, click_key, secs_before DESC
+        ORDER BY brand, click_key, secs_before DESC, host, section
     """)
+
+    # Sites that may be named: common enough, or a brand / network site.
+    named = {r["host"] for r in rows(con, f"""
+        SELECT host
+        FROM brand_user_events
+        GROUP BY host
+        HAVING count(DISTINCT user_id) >= {MIN_SITE_USERS}
+            OR bool_or(is_brand_page OR hop_brand IS NOT NULL)
+            OR regexp_matches(host, mattress_brand_re())     -- the category (sql/14)
+            OR regexp_matches(host, review_host_re())
+    """)}
+
+    def shown(h):
+        if ADULT_HOST_RE.search(h):
+            return OTHER_SITE
+        return h if h in named or NETWORK_HOST_RE.search(h) else OTHER_SITE
 
     # Compact encoding: hosts and publishers as indexes into lookup lists.
     hosts, host_ix = [], {}
@@ -116,6 +151,7 @@ def main():
     def hid(h):
         if h is None:
             return None
+        h = shown(h)
         if h not in host_ix:
             host_ix[h] = len(hosts)
             hosts.append(h)
@@ -124,8 +160,11 @@ def main():
     steps, after = {}, {}
     for j in journey:
         target = steps if j["before"] else after
-        target.setdefault((j["brand"], j["click_key"]), []).append(
-            [hid(j["host"]), j["section"], abs(int(j["secs_before"]))])
+        seq = target.setdefault((j["brand"], j["click_key"]), [])
+        step = [hid(j["host"]), j["section"], abs(int(j["secs_before"]))]
+        if seq and seq[-1][:2] == step[:2]:     # two masked sites in a row read as one
+            continue
+        seq.append(step)
 
     def landing_section(u):
         m = re.match(r"^[a-z]+://[^/?#]+(/[^/?#]*)", u or "")

@@ -19,7 +19,7 @@ are per day, as panel counts × a scale factor calibrated on the brand's own aud
 | Nectar | Impact | 51 | 3.9% | 4 | 11.1k (3.0k – 28.5k) | 4.4k | 0 | 56 – 223 ³ |
 | Helix | Impact | 19 | 10.5% | 2 | 5.6k (0.6k – 20.1k) | 2.2k | 0 | 28 – 111 ³ |
 | DreamCloud | Impact | 27 | 7.4% | 2 | 5.6k (0.6k – 20.1k) | 2.2k | 0 | 28 – 111 ³ |
-| Walmart | Impact | 16,401 | 6.4% | 6,449 | 7.0M ⁴ | 3.0M | 111 (1.72%) | 121k |
+| Walmart | Impact | 16,401 | 6.4% | 6,449 | 7.0M ⁴ (2.0M without flooding) | 3.0M | 111 (1.72%) | 121k |
 
 ¹ Mattress brands scaled with the walmart.com-calibrated factor; Walmart with the population ratio.
 ² Five clicks that landed on saatva.com, plus one Partnerize click that never loaded the site
@@ -27,8 +27,10 @@ are per day, as panel counts × a scale factor calibrated on the brand's own aud
 ³ No mattress-brand order, registration or financing application followed an affiliate click
 that day. The range applies the mattress e-commerce conversion benchmark (0.5–2%) to the
 estimated clicks.
-⁴ Walmart averages 6.4 clicks per clicking user, because creator storefronts link to many products.
-The share of visits that start with an affiliate click (6.4%) is the more comparable measure.
+⁴ Recorded clicks. **71% of them come from 58 panel people (6% of clickers) who click 13–15 times an hour
+and almost never order** (*Click flooding* below). Without them, about 2.0M clicks a day (1.7M–2.7M across
+thresholds), converting at 5.8%. The share of visits that start with an affiliate click (6.4%) is the more
+comparable measure.
 
 **External checks.** Similarweb ranks affiliate as Saatva's #1 traffic channel (23.7%), or about
 16k US affiliate visits/day. The panel-based estimate is 16.7k clicks/day; the scale is partly
@@ -45,8 +47,18 @@ lean the same way: 43% and 37% of visits come from paid search.
   * A publisher named as an *email* partner (`brandxemail`) delivered its click through a
     *Google ad* (`gad_source=1`) to `/sale`, with an auto-applied coupon.
 * **Where the volume allows it (Walmart, 6,449 clicks)**, the clicks with a strong signal are
-  13–24% of affiliate clicks but **52–79% of affiliate-attributed orders**. The range depends on
-  the look-back window (2–30 min; see `hijack_sensitivity`).
+  13–24% of all affiliate clicks but **52–79% of affiliate-attributed orders**. The range depends on
+  the look-back window (2–30 min; see `hijack_sensitivity`). Most clicks are click flooding (below),
+  which almost never converts; among the remaining clicks from ordinary shoppers, the flagged share is
+  26–41% of clicks for 51–79% of orders.
+* **Click flooding (`15_click_flooding.sql`).** 58 US panel people (6% of Walmart clickers) make 4,594 of the
+  6,449 Walmart affiliate clicks (71%) and 4 of its 111 affiliate orders. Below 20 clicks a day people click
+  under twice an hour across 13–15 sites; above it, 13–15 times an hour across 6–9 sites. The top one loops
+  `go.sylikes.com → rd.bizrate.com → walmart.com/ip/…` about once a minute for 24 hours, on 5 sites in total.
+  Three publishers take 98% of these clicks: impact:6144707 (49%, via `rd.bizrate.com`), impact:1390754 (28%,
+  via `mavely.app.link`) and impact:3699778 (21%, via `s.golikely.com` and `walmrt.us`). It costs a CPA program little directly, but it inflates
+  click counts, EPC-based publisher rankings and any per-click payout, and it fills cookies that can win
+  last-click credit later. No mattress-brand user crosses the threshold in this day.
 * **Clicks fired after the buyer had already viewed the cart or checkout** (within 30 min)
   convert at **13%**, or 15% within 2 min, against 0.4% for clicks with no indicator. The median
   time from click to order is **2.3 minutes**. 258 of them had a walmart.com page as the previous
@@ -117,7 +129,10 @@ or network needed. It turns the hijacking indicators into a weekly working tool 
   same view.
 
 Privacy: the page holds click-level data without user ids, query strings or full URLs. It keeps only the
-domains visited and, on the brand's own site, the first segment of the path.
+domains visited and, on the brand's own site, the first segment of the path. A rare site could single a person
+out, so a domain is named only if at least 20 of the panel's brand shoppers visited it that day, or it is a brand
+site, a mattress brand or review site, or affiliate-network infrastructure; every other site, and any adult site,
+shows as "other site".
 
 ## Approach
 
@@ -213,14 +228,15 @@ with public traffic figures: its true daily US visits ÷ the panel's US visits t
 | Coupon / cash-back before | A coupon or cash-back site or extension fired within 60 s before | Medium |
 | Multi-brand burst | Landings on 2+ other advertisers within ±2 min. Counts as stuffing only if the user never engages; a listicle opened in tabs looks the same | Review |
 | No visible referrer | No activity in the 30 min before (also true for app and email clicks) | Weak |
+| Click flooding | The person made ≥ 20 affiliate clicks for the brand in the day (tested at 10 and 50). A separate fraud pattern, kept out of the hijacking tiers | Separate |
 
 The 30-minute look-back is tested at 10 and 2 minutes in `10_sensitivity.sql`:
 
-| Walmart, look-back | % of clicks flagged | % of affiliate orders from flagged clicks | Conversion rate: flagged vs other |
-|---|---:|---:|---|
-| 30 min | 23.6% | 79.3% | 5.8% vs 0.5% |
-| 10 min | 18.8% | 72.1% | 6.6% vs 0.6% |
-| 2 min | 13.3% | 52.3% | 6.8% vs 1.0% |
+| Walmart, look-back | % of clicks flagged | % of affiliate orders from flagged clicks | Conversion rate: flagged vs other | Without click flooding: % clicks flagged / % orders |
+|---|---:|---:|---|---|
+| 30 min | 23.6% | 79.3% | 5.8% vs 0.5% | 41.1% / 78.5% |
+| 10 min | 18.8% | 72.1% | 6.6% vs 0.6% | 35.2% / 71.0% |
+| 2 min | 13.3% | 52.3% | 6.8% vs 1.0% | 26.4% / 50.5% |
 
 ## Repository layout
 
@@ -240,6 +256,7 @@ sql/                       # the analysis, run in order (each file documents its
   12_seasonality.sql       # scale factors moved from August to 1 May with Google Trends
   13_panel.sql             # panel profile, site coverage, recruitment-bias checks
   14_funnels.sql           # category funnel, cross-shopping, funnel stage of each affiliate click
+  15_click_flooding.sql    # people with >= 20 affiliate clicks a day: behaviour, share, estimate without them
 scripts/
   download_data.py         # parallel, resumable download of the archive
   fetch_google_trends.py   # daily US search interest per brand -> external/ (run once)

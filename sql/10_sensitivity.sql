@@ -10,6 +10,11 @@
 --
 -- Read: if flagged clicks still convert far above the rest, and still account for
 -- most affiliate-credited orders at 2 minutes, the result is robust.
+--
+-- The `_excl_flood` columns repeat the shares without click-flooding clicks
+-- (07, 15). Flood clicks are most of Walmart's clicks and almost never convert,
+-- so they inflate the denominator: with them, the flagged share of clicks looks
+-- smaller than it is among real shoppers.
 -- =============================================================================
 
 CREATE OR REPLACE TABLE hijack_sensitivity AS
@@ -18,7 +23,7 @@ WITH windows AS (
     FROM (VALUES (1800, '30 min (base)'), (600, '10 min'), (120, '2 min')) AS t(secs, look_back)
 ),
 flagged AS (
-    SELECT w.secs, w.look_back, c.brand, c.converted, c.click_time, c.conversion_time,
+    SELECT w.secs, w.look_back, c.brand, c.converted, c.click_time, c.conversion_time, c.click_flood,
            coalesce(c.secs_since_checkout <= w.secs, FALSE)                    AS checkout_flag,
            c.no_landing OR c.has_paid_search_click_id
                OR coalesce(c.secs_since_checkout   <= w.secs, FALSE)
@@ -37,7 +42,10 @@ SELECT brand,
        round(100.0 * count_if(checkout_flag) / count(*), 1)                                       AS pct_clicks_checkout,
        round(100.0 * count_if(checkout_flag AND converted) / nullif(count_if(checkout_flag), 0), 2) AS cr_checkout_pct,
        round(median(date_diff('second', click_time, conversion_time))
-             FILTER (WHERE checkout_flag AND converted) / 60.0, 1)                                AS median_min_to_order_checkout
+             FILTER (WHERE checkout_flag AND converted) / 60.0, 1)                                AS median_min_to_order_checkout,
+       round(100.0 * count_if(strong_flag AND NOT click_flood) / nullif(count_if(NOT click_flood), 0), 1) AS pct_clicks_strong_excl_flood,
+       round(100.0 * count_if(strong_flag AND converted AND NOT click_flood)
+             / nullif(count_if(converted AND NOT click_flood), 0), 1)                             AS pct_orders_from_strong_excl_flood
 FROM flagged
 GROUP BY brand, look_back, secs
 ORDER BY brand, secs DESC;

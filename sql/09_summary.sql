@@ -25,7 +25,8 @@ SELECT c.*,
        o.reached_cart, o.reached_checkout, o.registered, o.applied_financing,
        r.primary_signal, r.strong_hijack_signal, r.no_landing, r.multi_brand_burst,
        r.in_checkout_before, r.already_on_site, r.secs_since_checkout, r.secs_since_brand_page,
-       r.brand_search_60s, r.coupon_ext_60s, r.no_referrer, r.prev_host, r.secs_since_prev
+       r.brand_search_60s, r.coupon_ext_60s, r.no_referrer, r.prev_host, r.secs_since_prev,
+       r.user_brand_clicks, r.click_flood
 FROM affiliate_clicks c
 JOIN click_outcomes o USING (brand, click_key)
 JOIN click_risk r     USING (brand, click_key)
@@ -50,7 +51,9 @@ clicks AS (
            count_if(reached_cart OR reached_checkout)         AS clicks_to_cart_or_checkout,
            count_if(converted)                                AS converted_clicks,
            count_if(converted_broad)                          AS converted_clicks_broad,
-           count_if(strong_hijack_signal)                     AS strong_signal_clicks
+           count_if(strong_hijack_signal)                     AS strong_signal_clicks,
+           count_if(click_flood)                              AS flood_clicks,
+           count_if(strong_hijack_signal AND NOT click_flood) AS strong_signal_clicks_excl_flood
     FROM us_clicks
     GROUP BY brand
 ),
@@ -90,7 +93,13 @@ SELECT b.brand,
        CASE WHEN coalesce(c.converted_clicks, 0) < 10
             THEN round(coalesce(c.clicks, 0) * f.scale_factor * mattress_cr_low()) END  AS est_us_converted_clicks_benchmark_lo,
        CASE WHEN coalesce(c.converted_clicks, 0) < 10
-            THEN round(coalesce(c.clicks, 0) * f.scale_factor * mattress_cr_high()) END AS est_us_converted_clicks_benchmark_hi
+            THEN round(coalesce(c.clicks, 0) * f.scale_factor * mattress_cr_high()) END AS est_us_converted_clicks_benchmark_hi,
+       -- Click flooding (07): clicks from people with >= 20 affiliate clicks for the brand in the day
+       coalesce(c.flood_clicks, 0)                                                    AS panel_clicks_flood,
+       round(100.0 * c.flood_clicks / nullif(c.clicks, 0), 1)                         AS pct_clicks_flood,
+       round(100.0 * c.strong_signal_clicks_excl_flood
+             / nullif(c.clicks - c.flood_clicks, 0), 1)                               AS pct_clicks_strong_hijack_signal_excl_flood,
+       round((coalesce(c.clicks, 0) - coalesce(c.flood_clicks, 0)) * f.scale_factor) AS est_us_affiliate_clicks_excl_flood
 FROM brands b
 JOIN brand_scale f  ON f.brand = b.brand
 LEFT JOIN visits v  ON v.brand = b.brand
@@ -125,6 +134,7 @@ SELECT brand,
        count_if(multi_brand_burst)                             AS burst,
        count_if(no_referrer)                                   AS no_referrer,
        round(100.0 * count_if(strong_hijack_signal) / count(*), 1) AS pct_strong_signal,
+       count_if(click_flood)                                   AS flood_clicks,
        min(publisher_sub_id)                                   AS example_sub_id,
        min(coupon)                                             AS example_coupon
 FROM us_clicks

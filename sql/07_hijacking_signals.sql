@@ -24,7 +24,19 @@
 --                       counts as stuffing only if the user then never engages with those sites
 --   no_referrer         no activity at all in the 30 min before (weak: also true for app/email clicks)
 -- The 30-minute windows are tested against stricter windows in 10_sensitivity.sql.
+--
+-- A second fraud pattern sits beside hijacking. Hijacking steals the credit for
+-- an order; click flooding inflates the click count:
+--   click_flood         the person made >= 20 affiliate clicks for this brand in the day.
+--                       At Walmart the users above that line click 13-15 times an hour
+--                       (vs < 2 below it), visit 6-9 sites all day (vs 13-15), and
+--                       convert almost never. The top one loops sylikes -> bizrate ->
+--                       a walmart.com product page about once a minute for 24 hours.
+-- It is kept out of primary_signal, so the hijacking shares stay comparable;
+-- 15_click_flooding.sql reports it and re-reads the hijacking shares without it.
 -- =============================================================================
+
+CREATE OR REPLACE MACRO flood_min_clicks() AS 20;
 
 CREATE OR REPLACE MACRO serp_host_re() AS
     '(^|\.)(google\.[a-z.]+|bing\.com|search\.yahoo\.com|duckduckgo\.com|search\.brave\.com|ecosia\.org|search\.aol\.com|startpage\.com)$';
@@ -93,6 +105,8 @@ SELECT c.*,
            ELSE                                   '8 No hijack indicator'
        END                                                  AS primary_signal,
        (c.click_source = 'hop, no landing' OR x.in_checkout_before OR x.already_on_site
-        OR c.has_paid_search_click_id)                      AS strong_hijack_signal
+        OR c.has_paid_search_click_id)                      AS strong_hijack_signal,
+       count(*) OVER (PARTITION BY c.brand, c.user_id)     AS user_brand_clicks,
+       count(*) OVER (PARTITION BY c.brand, c.user_id) >= flood_min_clicks() AS click_flood
 FROM affiliate_clicks c
 JOIN click_context x USING (brand, click_key);
